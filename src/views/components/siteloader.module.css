@@ -1,0 +1,27 @@
+.siteloader {
+  background: transparent linear-gradient(117deg, #1F3A5F 0%, #1F3A5F 100%) 0% 0% no-repeat padding-box;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* This centers the loader box */
+.main {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Container for image inside the circle */
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

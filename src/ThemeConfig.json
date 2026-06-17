@@ -1,0 +1,56 @@
+{
+  "components": {
+    "Button": {
+      "colorLink": "#1677ff",
+      "colorPrimaryActive": "#1F3A5F"
+    },
+    "Input": {
+      "colorBgContainer": "#f5faffc4"
+    },
+    "Table": {
+      "colorFillAlter": "#F5FAFF",
+      "controlItemBgActiveHover": "#F9423A",
+      "controlItemBgActive": "#F9423A"      
+    },
+    "Menu": {
+      "colorPrimary": "#003d78",
+      "colorItemBg": "#1F3A5F",
+      "colorItemBgHover": "rgba(255, 255, 255, 0.6)",
+      "colorItemBgActive": "rgba(0, 0, 0, 0.06)",
+      "colorSubItemBg": "rgba(0, 0, 0, 0.02)",
+      "colorItemBgSelected": "rgba(255, 255, 255, 0.72)",
+      "colorItemText": "white",
+      "colorItemTextHoverHorizontal": "#003D78",
+      "colorItemTextSelected": "#003C77",
+      "colorGroupTitle": "#1F3A5F",
+      "colorItemBgSelectedHorizontal": "#003D78",
+      "colorTextLightSolid": "black",
+      "radiusItem": 0,
+      "radiusSubMenuItem": 4,
+      "colorActiveBarWidth": 10,
+      "colorActiveBarHeight": 2,
+      "colorActiveBarBorderSize": 1,
+      "fontSize": 14,
+      "fontSizeLG": 16,
+      "borderRadius": 6,
+      "lineWidth": 1,
+      "lineWidthBold": 0
+    },
+    "Tabs": {
+      "colorBgContainer": "#1F3A5F",
+      "colorPrimary": "black",
+     
+      "inkBarColor": "red"
+    },
+    "Upload": {
+      "lineType": "dashed",
+      "controlHeightLG": 48,
+      "marginXS": 0
+    }
+  },
+  "token": {
+    "colorInfo": "white",
+    "colorPrimary": "#1F3A5F",
+    "colorBgLayout": "#f5faffc4"
+  }
+}
