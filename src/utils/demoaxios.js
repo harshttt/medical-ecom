@@ -3,7 +3,7 @@ import util from "./util";
 import config from "../config";
 
 const axiosInstance = axios.create({
-  baseURL: "http://35.208.39.36:5500"
+  baseURL: "https://api.bsconnect.store/"
   // baseURL: "https://api.astrowala.ai",
 });
 
