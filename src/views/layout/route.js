@@ -9,6 +9,7 @@ import Category from "../pages/category";
 import util from "../../utils/util";
 import UserVendor from "../pages/Vendor Management/userVendor";
 import ProductManagement from "../pages/Product-Management/product";
+import OrderHistory from "../pages/Order-History/orderHistory";
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
@@ -76,6 +77,21 @@ const routes = [
         url: "/",
         component: ProductManagement,
          roles: [roles.VENDOR],
+      },
+    ],
+  },
+    {
+    title: "Order History",
+    icon: CalendarOutlined,
+    url: "/order-history",
+    roles: [roles.VENDOR],
+    children: [
+      {
+        title: "Order History",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        component: OrderHistory,
+         roles: [roles.SUPER_ADMIN],
       },
     ],
   },
