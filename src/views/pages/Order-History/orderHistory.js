@@ -631,7 +631,6 @@ function Search({ qData, setQData, list, statusOptions, paymentStatusOptions }) 
             options={statusOptions}
           />
         </Col>
-
         <Col span={5}>
           <Select
             placeholder="Payment Status"
