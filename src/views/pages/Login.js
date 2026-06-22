@@ -36,9 +36,9 @@ export default function Login() {
               <Row justify="center" align="middle">
                 <Col>
                   <img
-                    src="/logo2.png"
+                    src="/logo2.jpeg"
                     alt="Logo"
-                    style={{ height: "60px", width: "100%",  marginTop: "20px", objectFit: "contain" , marginLeft:"20px" }}
+                    style={{ height: "100px", width: "100%",  marginTop: "10px", objectFit: "contain"  }}
                   />
                 </Col>
               </Row>
