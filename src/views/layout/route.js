@@ -2,6 +2,7 @@ import {
   CalendarOutlined,
   InsertRowRightOutlined,
   HomeOutlined,
+  InsertRowAboveOutlined,
 } from "@ant-design/icons";
 import User from "../pages/user-management/User";
 import BrandManagement from "../pages/brand";
@@ -10,6 +11,9 @@ import util from "../../utils/util";
 import UserVendor from "../pages/Vendor Management/userVendor";
 import ProductManagement from "../pages/Product-Management/product";
 import OrderHistory from "../pages/Order-History/orderHistory";
+import Application from '../pages/applications'
+import Services from "../pages/services";
+import ContactPage from "../pages/contactus";
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
@@ -41,6 +45,14 @@ const routes = [
   },
 
   {
+    title: "Integrations",
+    icon: InsertRowAboveOutlined,
+    url: "/integration",
+    component: Services,
+    roles: [roles.SUPER_ADMIN],
+  },
+
+  {
     title: "Brand Management",
     icon: HomeOutlined,
     url: "/brand",
@@ -65,37 +77,68 @@ const routes = [
     ],
   },
 
-   {
+  {
     title: "Product Management",
     icon: CalendarOutlined,
     url: "/product-management",
-    roles: [roles.VENDOR],
+    roles: [roles.VENDOR, roles.SUPER_ADMIN],
     children: [
       {
         title: "Product Management",
         icon: InsertRowRightOutlined,
         url: "/",
         component: ProductManagement,
-         roles: [roles.VENDOR],
+        roles: [roles.VENDOR, roles.SUPER_ADMIN],
       },
     ],
   },
-    {
+  {
     title: "Order History",
     icon: CalendarOutlined,
     url: "/order-history",
-    roles: [roles.VENDOR],
+    roles: [roles.SUPER_ADMIN],
     children: [
       {
         title: "Order History",
         icon: InsertRowRightOutlined,
         url: "/",
         component: OrderHistory,
-         roles: [roles.SUPER_ADMIN],
+        roles: [roles.SUPER_ADMIN],
       },
     ],
   },
 
+  {
+    title: "Contact Us",
+    icon: CalendarOutlined,
+    url: "/contactus",
+    roles: [roles.SUPER_ADMIN],
+    children: [
+      {
+        title: "Contact Us",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        component: ContactPage,
+        roles: [roles.SUPER_ADMIN],
+      },
+    ],
+  },
+
+  {
+    title: "Applications",
+    icon: CalendarOutlined,
+    url: "/applications",
+    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+    children: [
+      {
+        title: "Applications",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        component: Application,
+        roles: [roles.SUPER_ADMIN, roles.VENDOR],
+      },
+    ],
+  },
 ];
 
 const filteredRoutes = routes
