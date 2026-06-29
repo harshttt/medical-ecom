@@ -14,6 +14,7 @@ import OrderHistory from "../pages/Order-History/orderHistory";
 import Application from '../pages/applications'
 import Services from "../pages/services";
 import ContactPage from "../pages/contactus";
+import Coupons from "../pages/coupons"
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
@@ -90,8 +91,16 @@ const routes = [
         component: ProductManagement,
         roles: [roles.VENDOR, roles.SUPER_ADMIN],
       },
+       {
+        title: "Coupons Management",
+        icon: InsertRowRightOutlined,
+        url: "/coupon",
+        component: Coupons,
+        roles: [roles.SUPER_ADMIN],
+      },
     ],
   },
+ 
   {
     title: "Order History",
     icon: CalendarOutlined,

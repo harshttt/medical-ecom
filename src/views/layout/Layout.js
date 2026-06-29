@@ -30,8 +30,8 @@ export default function MyLayout() {
         <>
             <Layout>
                 <Layout.Sider width={250} style={{ overflow: 'auto', padding: 0, background: "#1F3A5F" }} collapsible={false} collapsed={collapsed}>
-                    <Layout.Header style={{ 
-                        padding: 0, 
+                    <Layout.Header style={{
+                        padding: 0,
                         background: colorBgContainer,
                         textAlign: "center",
                         display: "flex",
@@ -39,28 +39,28 @@ export default function MyLayout() {
                         justifyContent: "center",
                         height: "64px" // Standard header height
                     }}>
-                        <Link to="/" style={{ 
-                            display: "flex", 
-                            alignItems: "center", 
+                        <Link to="/" style={{
+                            display: "flex",
+                            alignItems: "center",
                             justifyContent: "center",
                             width: "100%",
                             height: "100%"
                         }}>
-                            {collapsed ? 
-                                <img 
+                            {collapsed ?
+                                <img
                                     style={{
                                         objectFit: "contain",
                                         maxHeight: "48px",
                                         maxWidth: "60px",
                                         width: "auto",
                                         height: "auto"
-                                    }} 
-                                    height={48} 
-                                    width={60} 
+                                    }}
+                                    height={48}
+                                    width={60}
                                     src='/logo2.jpeg'
                                     alt="Logo Small"
-                                /> : 
-                                <img 
+                                /> :
+                                <img
                                     style={{
                                         objectFit: "cover",
                                         maxHeight: "50px",
@@ -68,7 +68,7 @@ export default function MyLayout() {
                                         width: "100%",
                                         height: "auto",
                                         display: "block"
-                                    }}  
+                                    }}
                                     src='/logo2.jpeg'
                                     alt="Logo"
                                 />
