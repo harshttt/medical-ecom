@@ -36,7 +36,7 @@ function App() {
       serviceConstatnt.getConstant().then((res) => {
         // console.log("Constants response:", res.Constants);
         commonObj.constants = res?.Constants || {};
-        // console.log("Fetched constants:", commonObj.constants);
+        console.log("Fetched constants:", commonObj);
       });
 
     const validateToken = () =>

@@ -3,6 +3,7 @@ import axios from "../utils/axios";
 
 export default class AdminProductService {
   static baseURL = "vendor/product";
+  
 
   /**
    * Get all categories
