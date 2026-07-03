@@ -16,9 +16,7 @@ export default class service {
   }
 
   static userBlock(userId) {
-    return axios.patch(this.baseURL + "/user/block", null, {
-      params: { userId },
-    });
+    return axios.put(this.baseURL + `/admin/adminUser/toggle-block/${userId}`, );
   }
 
   static delete(id) {

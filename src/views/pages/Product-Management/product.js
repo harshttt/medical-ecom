@@ -1,753 +1,4 @@
-// // ProductManagement.jsx
-// import React, { useState, useEffect, useRef } from "react";
-// import {
-//   Table,
-//   Button,
-//   Form,
-//   Row,
-//   Col,
-//   Popconfirm,
-//   Card,
-//   Spin,
-//   message,
-//   Input,
-//   Space,
-//   Switch,
-//   Tag,
-//   Image,
-//   Modal,
-//   Select,
-//   InputNumber,
-//   Divider,
-// } from "antd";
-// import {
-//   DeleteOutlined,
-//   EditOutlined,
-//   EyeOutlined,
-//   PlusOutlined,
-//   ArrowLeftOutlined,
-//   MinusCircleOutlined,
-// } from "@ant-design/icons";
-// import { useNavigate } from "react-router-dom";
-// import AdminProductService from "../../../services/product";
-// import Pagination from "../../components/Pagination";
-// import dayjs from "dayjs";
-// import TinyMce from "../../../utils/TinyMce";
-
-// const { TextArea } = Input;
-// const { Option } = Select;
-
-// // ==================== Add/Edit Product Modal ====================
-// const AddEditProductModal = React.forwardRef(({ onSuccess }, ref) => {
-//   const [open, setOpen] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [form] = Form.useForm();
-//   const [editId, setEditId] = useState(null);
-
-//   const [categories, setCategories] = useState([]);
-//   const [brands, setBrands] = useState([]);
-
-//   React.useImperativeHandle(ref, () => ({
-//     openForm: async (productData = null) => {
-//       console.log("🔄 openForm called", productData ? "Edit Mode" : "Add Mode");
-
-//       await loadDropdowns();
-
-//       if (productData) {
-//         setEditId(productData._id);
-//         populateForm(productData);
-//       } else {
-//         setEditId(null);
-//         form.resetFields();
-//       }
-//       setOpen(true);
-//     },
-//   }));
-
-//   const loadDropdowns = async () => {
-//     try {
-//       console.log("📥 Loading categories and brands...");
-//       const [categoriesRes, brandsRes] = await Promise.all([
-//         AdminProductService.getAllCategories(),
-//         AdminProductService.getAllBrands(),
-//       ]);
-
-//       setCategories(categoriesRes?.data?.categories || []);
-//       setBrands(brandsRes?.data?.brands || []);
-//       console.log(
-//         "✅ Categories loaded:",
-//         categoriesRes?.data?.categories?.length || 0,
-//       );
-//       console.log("✅ Brands loaded:", brandsRes?.data?.brands?.length || 0);
-//     } catch (error) {
-//       console.error("❌ Dropdown load error:", error);
-//       message.error("Failed to load categories or brands");
-//     }
-//   };
-
-//   const populateForm = (product) => {
-//     const categoryId = product.categoryId?._id || product.categoryId;
-//     console.log("📝 Populating form for edit. Category ID:", categoryId);
-
-//     form.setFieldsValue({
-//       categoryId,
-//       brandId: product.brandId?._id || product.brandId,
-//       name: product.name,
-//       sku: product.sku,
-//       description: product.description,
-//       highlights: product.highlights?.length ? product.highlights : [""],
-//       price: product.price,
-//       discount: product.discount,
-//       gst: product.gst,
-//       stock: product.stock,
-//       images: product.images?.length ? product.images : [""],
-//     });
-//   };
-
-//   const handleSubmit = async () => {
-//     try {
-//       const values = await form.validateFields();
-//       console.log("📤 Submitting form values:", values);
-
-//       setLoading(true);
-
-//       const formattedValues = {
-//         ...values,
-//         highlights: values.highlights?.filter(Boolean) || [],
-//         images: values.images?.filter(Boolean) || [],
-//       };
-
-//       if (editId) {
-//         await AdminProductService.updateProduct(editId, formattedValues);
-//         message.success("Product updated successfully");
-//       } else {
-//         await AdminProductService.createProduct(formattedValues);
-//         message.success("Product created successfully");
-//       }
-
-//       setOpen(false);
-//       form.resetFields();
-//       onSuccess?.();
-//     } catch (error) {
-//       console.error("❌ Submit error:", error);
-//       message.error(error?.response?.data?.message || "Operation failed");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <Modal
-//       title={editId ? "Edit Product" : "Add New Product"}
-//       open={open}
-//       onCancel={() => {
-//         console.log("❌ Modal closed");
-//         setOpen(false);
-//         form.resetFields();
-//       }}
-//       width={950}
-//       footer={[
-//         <Button key="cancel" onClick={() => setOpen(false)}>
-//           Cancel
-//         </Button>,
-//         <Button
-//           key="submit"
-//           type="primary"
-//           loading={loading}
-//           onClick={handleSubmit}
-//         >
-//           {editId ? "Update" : "Create"}
-//         </Button>,
-//       ]}
-//       destroyOnClose
-//     >
-//       <Form form={form} layout="vertical">
-//         {/* Category Select */}
-//         <Row gutter={16}>
-//           <Col span={12}>
-//             <Form.Item
-//               name="categoryId"
-//               label="Category"
-//               rules={[{ required: true }]}
-//             >
-//               <Select
-//                 placeholder="Select Category"
-//                 showSearch
-//                 optionFilterProp="children"
-//               >
-//                 {categories.map((cat) => (
-//                   <Option key={cat._id} value={cat._id}>
-//                     {cat.name}
-//                   </Option>
-//                 ))}
-//               </Select>
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={12}>
-//             <Form.Item
-//               name="brandId"
-//               label="Brand"
-//               rules={[{ required: true, message: "Please select brand" }]}
-//             >
-//               <Select
-//                 placeholder="Select Brand"
-//                 showSearch
-//                 optionFilterProp="children"
-//               >
-//                 {brands.map((brand) => (
-//                   <Option key={brand._id} value={brand._id}>
-//                     {brand.name}
-//                   </Option>
-//                 ))}
-//               </Select>
-//             </Form.Item>
-//           </Col>
-//         </Row>
-
-//         <Row gutter={16}>
-//           <Col span={12}>
-//             <Form.Item
-//               name="name"
-//               label="Product Name"
-//               rules={[{ required: true }]}
-//             >
-//               <Input placeholder="Enter product name" />
-//             </Form.Item>
-//           </Col>
-//           <Col span={12}>
-//             <Form.Item name="sku" label="SKU" rules={[{ required: true }]}>
-//               <Input placeholder="Enter SKU" />
-//             </Form.Item>
-//           </Col>
-//         </Row>
-
-//         <Form.Item
-//           name="description"
-//           label="Description"
-//           rules={[{ required: true, message: "Please enter product description" }]}
-//         >
-//           <TinyMce
-//             value={form.getFieldValue("description") || ""}
-//             onChange={(v) => form.setFieldsValue({ description: v })}
-//           />
-//         </Form.Item>
-
-//         <Form.Item label="Highlights">
-//           <Form.List name="highlights">
-//             {(fields, { add, remove }) => (
-//               <>
-//                 {fields.map(({ key, name, ...restField }) => (
-//                   <Space
-//                     key={key}
-//                     style={{ display: "flex", marginBottom: 8 }}
-//                     align="baseline"
-//                   >
-//                     <Form.Item
-//                       {...restField}
-//                       name={name}
-//                       rules={[
-//                         { required: true, message: "Please enter highlight" },
-//                       ]}
-//                       style={{ flex: 1, marginBottom: 0 }}
-//                     >
-//                       <Input placeholder="Enter product highlight" />
-//                     </Form.Item>
-//                     <MinusCircleOutlined onClick={() => remove(name)} />
-//                   </Space>
-//                 ))}
-//                 <Form.Item>
-//                   <Button
-//                     type="dashed"
-//                     onClick={() => add()}
-//                     block
-//                     icon={<PlusOutlined />}
-//                   >
-//                     Add Highlight
-//                   </Button>
-//                 </Form.Item>
-//               </>
-//             )}
-//           </Form.List>
-//         </Form.Item>
-
-//         <Row gutter={16}>
-//           <Col span={6}>
-//             <Form.Item
-//               name="price"
-//               label="Price (₹)"
-//               rules={[{ required: true }]}
-//             >
-//               <InputNumber
-//                 style={{ width: "100%" }}
-//                 min={0}
-//                 formatter={(value) =>
-//                   `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-//                 }
-//                 parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
-//               />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item
-//               name="discount"
-//               label="Discount (%)"
-//               rules={[{ required: true }]}
-//             >
-//               <InputNumber
-//                 style={{ width: "100%" }}
-//                 min={0}
-//                 max={100}
-//                 formatter={(v) => `${v}%`}
-//                 parser={(v) => v.replace("%", "")}
-//               />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item
-//               name="gst"
-//               label="GST (%)"
-//               rules={[{ required: true }]}
-//             >
-//               <InputNumber
-//                 style={{ width: "100%" }}
-//                 min={0}
-//                 max={100}
-//                 formatter={(v) => `${v}%`}
-//                 parser={(v) => v.replace("%", "")}
-//               />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item
-//               name="stock"
-//               label="Stock Quantity"
-//               rules={[{ required: true }]}
-//             >
-//               <InputNumber style={{ width: "100%" }} min={0} />
-//             </Form.Item>
-//           </Col>
-//         </Row>
-
-//         <Form.Item label="Product Images (URLs)">
-//           <Form.List name="images">
-//             {(fields, { add, remove }) => (
-//               <>
-//                 {fields.map(({ key, name, ...restField }) => (
-//                   <Space
-//                     key={key}
-//                     style={{ display: "flex", marginBottom: 8 }}
-//                     align="baseline"
-//                   >
-//                     <Form.Item
-//                       {...restField}
-//                       name={name}
-//                       rules={[
-//                         { required: true, message: "Please enter image URL" },
-//                         { type: "url", message: "Please enter valid URL" },
-//                       ]}
-//                       style={{ flex: 1 }}
-//                     >
-//                       <Input placeholder="https://example.com/image.jpg" />
-//                     </Form.Item>
-//                     <MinusCircleOutlined onClick={() => remove(name)} />
-//                   </Space>
-//                 ))}
-//                 <Form.Item>
-//                   <Button
-//                     type="dashed"
-//                     onClick={() => add()}
-//                     block
-//                     icon={<PlusOutlined />}
-//                   >
-//                     Add Image URL
-//                   </Button>
-//                 </Form.Item>
-//               </>
-//             )}
-//           </Form.List>
-//         </Form.Item>
-//       </Form>
-//     </Modal>
-//   );
-// });
-
-// // ==================== Product View Modal ====================
-// const ProductViewModal = ({ open, data, onClose }) => {
-//   if (!data) return null;
-
-//   return (
-//     <Modal
-//       title="Product Details"
-//       open={open}
-//       onCancel={onClose}
-//       footer={<Button onClick={onClose}>Close</Button>}
-//       width={800}
-//       destroyOnClose
-//     >
-//       <Form layout="vertical">
-//         <Row gutter={20}>
-//           <Col span={24} style={{ textAlign: "center", marginBottom: 20 }}>
-//             <Image.PreviewGroup>
-//               <Space>
-//                 {data.images?.map((img, idx) => (
-//                   <Image
-//                     key={idx}
-//                     width={100}
-//                     height={100}
-//                     src={img}
-//                     style={{ objectFit: "cover", borderRadius: 4 }}
-//                   />
-//                 ))}
-//               </Space>
-//             </Image.PreviewGroup>
-//           </Col>
-
-//           <Col span={12}>
-//             <Form.Item label="Product Name">
-//               <Input value={data.name} disabled />
-//             </Form.Item>
-//           </Col>
-//           <Col span={12}>
-//             <Form.Item label="SKU">
-//               <Input value={data.sku} disabled/>
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={12}>
-//             <Form.Item label="Category">
-//               <Input value={data.categoryId?.name} disabled />
-//             </Form.Item>
-//           </Col>
-//           <Col span={12}>
-//             <Form.Item label="Brand">
-//               <Input value={data.brandId?.name} disabled />
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={24}>
-//             <Form.Item label="Description">
-//               <TextArea value={data.description} rows={3} disabled />
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={24}>
-//             <Form.Item label="Highlights">
-//               <ul>
-//                 {data.highlights?.map((highlight, idx) => (
-//                   <li key={idx}>{highlight}</li>
-//                 ))}
-//               </ul>
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={6}>
-//             <Form.Item label="Price">
-//               <Input value={`₹ ${data.price?.toLocaleString()}`} disabled />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item label="Discount">
-//               <Input value={`${data.discount}%`} disabled />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item label="GST">
-//               <Input value={`${data.gst}%`} disabled />
-//             </Form.Item>
-//           </Col>
-//           <Col span={6}>
-//             <Form.Item label="Stock">
-//               <Input value={data.stock} disabled />
-//             </Form.Item>
-//           </Col>
-//         </Row>
-//       </Form>
-//     </Modal>
-//   );
-// };
-
-// // ==================== Main Product Management Component ====================
-// export default function ProductManagement() {
-//   const navigate = useNavigate();
-//   const [data, setData] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [selected, setSelected] = useState([]);
-//   const [qData, setQData] = useState({ page: 1, limit: 10 });
-
-//   const addEditModalRef = useRef();
-//   const [viewModal, setViewModal] = useState({ open: false, data: null });
-
-//   const columns = [
-//     {
-//       title: "S.No",
-//       dataIndex: "sno",
-//       width: 60,
-//       render: (_, __, index) => index + 1 + (qData.page - 1) * qData.limit,
-//     },
-//     {
-//       title: "Product",
-//       dataIndex: "images",
-//       width: 80,
-//       render: (images) => (
-//         <Image
-//           src={images?.[0] || "/placeholder-image.png"}
-//           width={50}
-//           height={50}
-//           style={{ objectFit: "cover", borderRadius: 4 }}
-//           fallback="/placeholder-image.png"
-//         />
-//       ),
-//     },
-//     {
-//       title: "Name",
-//       dataIndex: "name",
-//       width: 200,
-//       render: (name) => name || "-",
-//     },
-//     { title: "SKU", dataIndex: "sku", width: 120, render: (sku) => sku || "-" },
-//     {
-//       title: "Category",
-//       dataIndex: "categoryId",
-//       width: 150,
-//       render: (cat) => cat?.name || "-",
-//     },
-//     {
-//       title: "Brand",
-//       dataIndex: "brandId",
-//       width: 150,
-//       render: (brand) => brand?.name || "-",
-//     },
-//     {
-//       title: "Price (₹)",
-//       dataIndex: "price",
-//       width: 120,
-//       render: (price) => `₹ ${price?.toLocaleString() || 0}`,
-//     },
-//     {
-//       title: "Stock",
-//       dataIndex: "stock",
-//       width: 80,
-//       render: (stock) => (
-//         <Tag color={stock > 10 ? "green" : stock > 0 ? "orange" : "red"}>
-//           {stock || 0}
-//         </Tag>
-//       ),
-//     },
-//     {
-//       title: "Status",
-//       dataIndex: "isActive",
-//       width: 100,
-//       render: (isActive, record) => (
-//         <Switch
-//           checked={isActive}
-//           onChange={() => toggleStatusHandler(record._id)}
-//           checkedChildren="Active"
-//           unCheckedChildren="Inactive"
-//         />
-//       ),
-//     },
-//     {
-//       title: "Created At",
-//       dataIndex: "createdAt",
-//       width: 120,
-//       render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
-//     },
-//     {
-//       title: "Action",
-//       dataIndex: "_id",
-//       width: 120,
-//       fixed: "right",
-//       render: (id, record) => (
-//         <Space>
-//           <Button
-//             type="primary"
-//             size="small"
-//             icon={<EyeOutlined />}
-//             onClick={() => setViewModal({ open: true, data: record })}
-//           />
-//           <Button
-//             type="primary"
-//             size="small"
-//             icon={<EditOutlined />}
-//             onClick={() => addEditModalRef.current.openForm(record)}
-//           />
-//           <Popconfirm
-//             title="Delete this product?"
-//             onConfirm={() => deleteHandler(id)}
-//             okText="Yes"
-//             cancelText="No"
-//           >
-//             <Button
-//               type="primary"
-//               size="small"
-//               danger
-//               icon={<DeleteOutlined />}
-//             />
-//           </Popconfirm>
-//         </Space>
-//       ),
-//     },
-//   ];
-
-//   const listProducts = () => {
-//     setLoading(true);
-//     AdminProductService.getAllProducts(qData)
-//       .then((res) => {
-//         const products = res?.data?.products || res?.data?.data || [];
-//         setData(products.map((v) => ({ ...v, key: v._id })));
-//       })
-//       .catch(() => message.error("Failed to fetch products"))
-//       .finally(() => setLoading(false));
-//   };
-
-//   const deleteHandler = (id) => {
-//     setLoading(true);
-//     AdminProductService.deleteProduct(id)
-//       .then(() => {
-//         message.success("Product deleted successfully");
-//         listProducts();
-//         setSelected([]);
-//       })
-//       .catch((err) =>
-//         message.error(err?.response?.data?.message || "Failed to delete"),
-//       )
-//       .finally(() => setLoading(false));
-//   };
-
-//   const deleteManyHandler = () => {
-//     setLoading(true);
-//     AdminProductService.deleteManyProducts(selected)
-//       .then(() => {
-//         message.success(`${selected.length} products deleted`);
-//         listProducts();
-//         setSelected([]);
-//       })
-//       .catch((err) =>
-//         message.error(err?.response?.data?.message || "Failed to delete"),
-//       )
-//       .finally(() => setLoading(false));
-//   };
-
-//   const toggleStatusHandler = (id) => {
-//     setLoading(true);
-//     AdminProductService.toggleProductStatus(id)
-//       .then(() => {
-//         message.success("Status updated");
-//         listProducts();
-//       })
-//       .catch((err) =>
-//         message.error(
-//           err?.response?.data?.message || "Failed to update status",
-//         ),
-//       )
-//       .finally(() => setLoading(false));
-//   };
-
-//   useEffect(() => {
-//     listProducts();
-//   }, [qData.page, qData.limit]);
-
-//   const rowSelection = {
-//     selectedRowKeys: selected,
-//     onChange: setSelected,
-//   };
-
-//   return (
-//     <Card
-//       bordered={false}
-//       size="small"
-//       title={
-//         <Space>
-//           <Button
-//             type="dashed"
-//             danger
-//             icon={<ArrowLeftOutlined />}
-//             onClick={() => navigate(-1)}
-//           >
-//             Back
-//           </Button>
-//           Product Management
-//         </Space>
-//       }
-//       extra={
-//         <Row justify="end" gutter={12}>
-//           {selected.length > 0 && (
-//             <Col>
-//               <Popconfirm
-//                 title={`Delete ${selected.length} selected products?`}
-//                 onConfirm={deleteManyHandler}
-//               >
-//                 <Button type="primary" danger icon={<DeleteOutlined />}>
-//                   Delete Selected ({selected.length})
-//                 </Button>
-//               </Popconfirm>
-//             </Col>
-//           )}
-//           <Col>
-//             <Button
-//               type="primary"
-//               icon={<PlusOutlined />}
-//               onClick={() => addEditModalRef.current.openForm()}
-//             >
-//               Add New Product
-//             </Button>
-//           </Col>
-//         </Row>
-//       }
-//     >
-//       <Table
-//         bordered
-//         loading={loading}
-//         size="small"
-//         rowSelection={rowSelection}
-//         columns={columns.map((col) => ({ ...col, ellipsis: false }))}
-//         dataSource={data}
-//         scroll={{ y: "calc(100vh - 340px)", x: 1200 }}
-//         pagination={false}
-//         title={() => (
-//           <Form
-//             onSubmitCapture={() => {
-//               setQData((prev) => ({ ...prev, page: 1 }));
-//               listProducts();
-//             }}
-//           >
-//             <Row gutter={12}>
-             
-//                <Col span={6}>
-//                 <Input
-//                   placeholder="Search by name, SKU..."
-//                   value={qData.search}
-//                   onChange={(e) =>
-//                     setQData({ ...qData, search: e.target.value })
-//                   }
-//                   allowClear
-//                 />
-//               </Col>
-//               <Col span={3}>
-//                 <Button type="primary" htmlType="submit">
-//                   Search
-//                 </Button>
-//               </Col>
-//             </Row>
-//           </Form>
-//         )}
-//         footer={() => <Pagination qData={qData} setQData={setQData} />}
-//       />
-
-//       <AddEditProductModal ref={addEditModalRef} onSuccess={listProducts} />
-
-//       <ProductViewModal
-//         open={viewModal.open}
-//         data={viewModal.data}
-//         onClose={() => setViewModal({ open: false, data: null })}
-//       />
-//     </Card>
-//   );
-// }
-
-// ProductManagement.jsx
-import React, { useState, useEffect, useRef } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   Table,
   Button,
@@ -755,18 +6,18 @@ import {
   Row,
   Col,
   Popconfirm,
-  Card,
   Spin,
+  Card,
   message,
   Input,
-  Space,
-  Switch,
-  Tag,
   Image,
+  Space,
+  Drawer,
+  Tag,
   Modal,
   Select,
-  InputNumber,
-  Divider,
+  Switch,
+  Cascader,
 } from "antd";
 import {
   DeleteOutlined,
@@ -774,455 +25,208 @@ import {
   EyeOutlined,
   PlusOutlined,
   ArrowLeftOutlined,
-  MinusCircleOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
-import AdminProductService from "../../../services/product";
+import React, {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from "react";
+import servicesProduct from "../../../services/product";
+import servicesCategory from "../../../services/category";
+import servicesBrand from "../../../services/brand";
+
 import Pagination from "../../components/Pagination";
-import dayjs from "dayjs";
-import TinyMce from "../../../utils/TinyMce";
-import util from "../../../utils/util"; // Assuming this exists like in reference
+import { useNavigate } from "react-router-dom";
+// import UploadImage from '../../utils/UploadImage';
+import moment from "moment";
+import util from "../../../utils/util";
+import UploadImage from "../../../utils/UploadImage";
+import UploadVideo from "../../../utils/UploadVideo";
+import UploadFile from "../../../utils/UploadCSV";
 
-const { TextArea } = Input;
-const { Option } = Select;
+import { AntdMsg } from "../../../utils/Antd";
+const { SHOW_CHILD } = Cascader;
 
-// ==================== PRODUCT STATUS CONSTANTS ====================
-const PRODUCT_STATUS = [
-  { label: "DRAFT", value: 1 },
-  { label: "ACTIVE", value: 2 },
-  { label: "INACTIVE", value: 3 },
-  { label: "REJECTED", value: 4 },
-  { label: "PENDING_REVIEW", value: 5 },
-];
-
-const getStatusTag = (status) => {
-  const statusMap = {
-    1: <Tag color="default">DRAFT</Tag>,
-    2: <Tag color="green">ACTIVE</Tag>,
-    3: <Tag color="orange">INACTIVE</Tag>,
-    4: <Tag color="red">REJECTED</Tag>,
-    5: <Tag color="gold">PENDING REVIEW</Tag>,
-  };
-  return statusMap[status] || <Tag color="default">-</Tag>;
-};
-
-// ==================== Add/Edit Product Modal ====================
-const AddEditProductModal = React.forwardRef(({ onSuccess }, ref) => {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
-  const [editId, setEditId] = useState(null);
-
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-
-  React.useImperativeHandle(ref, () => ({
-    openForm: async (productData = null) => {
-      await loadDropdowns();
-
-      if (productData) {
-        setEditId(productData._id);
-        populateForm(productData);
-      } else {
-        setEditId(null);
-        form.resetFields();
-        // Default status for new product by Superadmin
-        form.setFieldsValue({ status: 2 }); // ACTIVE
-      }
-      setOpen(true);
-    },
-  }));
-
-  const loadDropdowns = async () => {
-    try {
-      const [categoriesRes, brandsRes] = await Promise.all([
-        AdminProductService.getAllCategories(),
-        AdminProductService.getAllBrands(),
-      ]);
-
-      setCategories(categoriesRes?.data?.categories || []);
-      setBrands(brandsRes?.data?.brands || []);
-    } catch (error) {
-      message.error("Failed to load categories or brands");
-    }
-  };
-
-  const populateForm = (product) => {
-    const categoryId = product.categoryId?._id || product.categoryId;
-    form.setFieldsValue({
-      categoryId,
-      brandId: product.brandId?._id || product.brandId,
-      name: product.name,
-      sku: product.sku,
-      description: product.description,
-      highlights: product.highlights?.length ? product.highlights : [""],
-      price: product.price,
-      discount: product.discount,
-      gst: product.gst,
-      stock: product.stock,
-      images: product.images?.length ? product.images : [""],
-      status: product.status,
-    });
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      setLoading(true);
-
-      const formattedValues = {
-        ...values,
-        highlights: values.highlights?.filter(Boolean) || [],
-        images: values.images?.filter(Boolean) || [],
-      };
-
-      if (editId) {
-        await AdminProductService.updateProduct(editId, formattedValues);
-        message.success("Product updated successfully");
-      } else {
-        await AdminProductService.createProduct(formattedValues);
-        message.success("Product created successfully (Active by default)");
-      }
-
-      setOpen(false);
-      form.resetFields();
-      onSuccess?.();
-    } catch (error) {
-      message.error(error?.response?.data?.message || "Operation failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal
-      title={editId ? "Edit Product" : "Add New Product"}
-      open={open}
-      onCancel={() => {
-        setOpen(false);
-        form.resetFields();
-      }}
-      width={950}
-      footer={[
-        <Button key="cancel" onClick={() => setOpen(false)}>
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          loading={loading}
-          onClick={handleSubmit}
-        >
-          {editId ? "Update" : "Create"}
-        </Button>,
-      ]}
-      destroyOnClose
-    >
-      <Form form={form} layout="vertical">
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="categoryId" label="Category" rules={[{ required: true }]}>
-              <Select placeholder="Select Category" showSearch>
-                {categories.map((cat) => (
-                  <Option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="brandId" label="Brand" rules={[{ required: true }]}>
-              <Select placeholder="Select Brand" showSearch>
-                {brands.map((brand) => (
-                  <Option key={brand._id} value={brand._id}>
-                    {brand.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        {/* Status Field - Visible in Edit Mode */}
-        {editId && (
-          <Form.Item name="status" label="Product Status" rules={[{ required: true }]}>
-            <Select>
-              {PRODUCT_STATUS.map((s) => (
-                <Option key={s.value} value={s.value}>
-                  {s.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        )}
-
-        {/* Rest of the form remains same */}
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="name" label="Product Name" rules={[{ required: true }]}>
-              <Input placeholder="Enter product name" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="sku" label="SKU" rules={[{ required: true }]}>
-              <Input placeholder="Enter SKU" />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Form.Item name="description" label="Description" rules={[{ required: true }]}>
-          <TinyMce
-            value={form.getFieldValue("description") || ""}
-            onChange={(v) => form.setFieldsValue({ description: v })}
-          />
-        </Form.Item>
-
-        {/* Highlights, Price, Discount, GST, Stock, Images - unchanged */}
-        <Form.Item label="Highlights">
-          <Form.List name="highlights">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
-                    <Form.Item {...restField} name={name} rules={[{ required: true }]}>
-                      <Input placeholder="Enter product highlight" />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  Add Highlight
-                </Button>
-              </>
-            )}
-          </Form.List>
-        </Form.Item>
-
-        <Row gutter={16}>
-          <Col span={6}>
-            <Form.Item name="price" label="Price (₹)" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="discount" label="Discount (%)" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} max={100} />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="gst" label="GST (%)" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} max={100} />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="stock" label="Stock Quantity" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Form.Item label="Product Images (URLs)">
-          <Form.List name="images">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
-                    <Form.Item {...restField} name={name} rules={[{ required: true, type: "url" }]}>
-                      <Input placeholder="https://example.com/image.jpg" />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  Add Image URL
-                </Button>
-              </>
-            )}
-          </Form.List>
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-});
-
-// ==================== Product View Modal ====================
-const ProductViewModal = ({ open, data, onClose }) => {
-  if (!data) return null;
-
-  return (
-    <Modal
-      title="Product Details"
-      open={open}
-      onCancel={onClose}
-      footer={<Button onClick={onClose}>Close</Button>}
-      width={800}
-      destroyOnClose
-    >
-      <Form layout="vertical">
-        <Row gutter={20}>
-          <Col span={24} style={{ textAlign: "center", marginBottom: 20 }}>
-            <Image.PreviewGroup>
-              <Space>
-                {data.images?.map((img, idx) => (
-                  <Image
-                    key={idx}
-                    width={100}
-                    height={100}
-                    src={img}
-                    style={{ objectFit: "cover", borderRadius: 4 }}
-                  />
-                ))}
-              </Space>
-            </Image.PreviewGroup>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item label="Product Name">
-              <Input value={data.name} disabled />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="SKU">
-              <Input value={data.sku} disabled/>
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item label="Category">
-              <Input value={data.categoryId?.name} disabled />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="Brand">
-              <Input value={data.brandId?.name} disabled />
-            </Form.Item>
-          </Col>
-
-          <Col span={24}>
-            <Form.Item label="Description">
-              <TextArea value={data.description} rows={3} disabled />
-            </Form.Item>
-          </Col>
-
-          <Col span={24}>
-            <Form.Item label="Highlights">
-              <ul>
-                {data.highlights?.map((highlight, idx) => (
-                  <li key={idx}>{highlight}</li>
-                ))}
-              </ul>
-            </Form.Item>
-          </Col>
-
-          <Col span={6}>
-            <Form.Item label="Price">
-              <Input value={`₹ ${data.price?.toLocaleString()}`} disabled />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item label="Discount">
-              <Input value={`${data.discount}%`} disabled />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item label="GST">
-              <Input value={`${data.gst}%`} disabled />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item label="Stock">
-              <Input value={data.stock} disabled />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Modal>
-  );
-};
-
-
-// ==================== Main Component ====================
-export default function ProductManagement() {
+export default function Product() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [qData, setQData] = useState({ page: 1, limit: 10 });
+  const [category, setCategory] = useState([]);
+  const [brand, setBrand] = useState([]);
+  const [qData, setQData] = useState({ page: 1, limit: 10, });
 
-  const addEditModalRef = useRef();
-  const [viewModal, setViewModal] = useState({ open: false, data: null });
+
+  const addNewModalRef = useRef();
 
   const columns = [
-    { title: "S.No", width: 60, render: (_, __, index) => index + 1 + (qData.page - 1) * qData.limit },
     {
-      title: "Product",
-      dataIndex: "images",
-      width: 80,
-      render: (images) => (
-        <Image src={images?.[0]} width={50} height={50} style={{ objectFit: "cover", borderRadius: 4 }} fallback="/placeholder-image.png" />
+      title: "S.No",
+      dataIndex: "sno",
+      width: 50,
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+    },
+
+    {
+      title: "Category",
+      dataIndex: "categoryName",
+    },
+
+    {
+      title: "Thumbnail",
+      dataIndex: "thumbnail",
+      render: (v) => (
+        <Image
+          src={v || "https://via.placeholder.com/150"}
+          width={50}
+          height={50}
+          style={{ objectFit: "cover" }}
+        />
       ),
     },
-    { title: "Name", dataIndex: "name", width: 200 },
-    { title: "SKU", dataIndex: "sku", width: 120 },
-    { title: "Category", dataIndex: "categoryId", width: 150, render: (cat) => cat?.name || "-" },
-    { title: "Brand", dataIndex: "brandId", width: 150, render: (brand) => brand?.name || "-" },
-    { title: "Price (₹)", dataIndex: "price", width: 120, render: (price) => `₹ ${price?.toLocaleString() || 0}` },
+
     {
-      title: "Stock",
-      dataIndex: "stock",
-      width: 80,
-      render: (stock) => <Tag color={stock > 10 ? "green" : stock > 0 ? "orange" : "red"}>{stock || 0}</Tag>,
+      title: "Price",
+      dataIndex: "price",
+      render: (v) => <span> ₹{v || "-"}</span>
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      width: 130,
-      render: (status) => getStatusTag(status),
+      title: "Discount %",
+      dataIndex: "discount",
     },
+
+    {
+      title: "Final Price",
+      dataIndex: "finalPrice",
+      render: (v, row) => (
+        <span> ₹{ v || "-"}</span>
+      ),
+    },
+
     {
       title: "Action",
-      width: 140,
-      fixed: "right",
-      render: (_, record) => (
+      dataIndex: "_id",
+      width: 100,
+      render: (v, row) => (
         <Space>
-          <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => setViewModal({ open: true, data: record })} />
-          <Button type="primary" size="small" icon={<EditOutlined />} onClick={() => addEditModalRef.current.openForm(record)} />
-          <Popconfirm title="Delete this product?" onConfirm={() => deleteHandler(record._id)}>
-            <Button type="primary" size="small" danger icon={<DeleteOutlined />} />
+          <Popconfirm
+            title="Are you sure to delete this?"
+            onConfirm={() => deleteData(row?._id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              type="primary"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+            />
           </Popconfirm>
+          <Button
+            type="primary"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => addNewModalRef.current.openForm(row)}
+          />
         </Space>
       ),
     },
   ];
 
-  const listProducts = () => {
+  function list() {
     setLoading(true);
-    AdminProductService.getAllProducts(qData)
+    servicesProduct
+      .listProduct(qData)
       .then((res) => {
-        const products = res?.data?.products || res?.data?.data || [];
-        setData(products.map((v) => ({ ...v, key: v._id })));
+        setData(res?.data?.products?.map((v) => ({ ...v, key: v._id })));
+        setQData({
+          ...qData,
+          limit: res?.data?.pagination?.limit,
+          page: res?.data?.pagination?.page,
+          total: res?.data?.pagination?.total,
+        });
       })
-      .catch(() => message.error("Failed to fetch products"))
+      .catch(() => {
+        message.error("Failed to fetch data");
+      })
       .finally(() => setLoading(false));
+  }
+
+  const deleteData = (ids) => {
+    servicesProduct
+      .delete(ids)
+      .then((res) => {
+        message.success(res?.message);
+        list();
+        setSelected([]);
+      })
+      .catch((err) => {
+        message.error(err?.message);
+      });
   };
 
-  const deleteHandler = (id) => {
-    setLoading(true);
-    AdminProductService.deleteProduct(id)
-      .then(() => {
-        message.success("Product deleted");
-        listProducts();
+  const activeHandler = (id) => {
+    servicesProduct
+      .toggel(id)
+      .then((res) => {
+        message.success(res?.message);
+        list();
+        setSelected([]);
       })
-      .catch((err) => message.error(err?.response?.data?.message || "Delete failed"))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        message.error(err?.message);
+      });
   };
 
-  const deleteManyHandler = () => { /* ... same as before */ };
+  const tableColumns = columns.map((item) => ({ ...item, ellipsis: false }));
+
+  tableColumns[0].fixed = true;
+  tableColumns[tableColumns.length - 1].fixed = "right";
+
+  const tableProps = {
+    bordered: true,
+    loading,
+    title: () => (
+      <Search
+        {...{
+          qData,
+          setQData,
+          list,
+
+        }}
+      />
+    ),
+    size: "small",
+    showHeader: true,
+    footer: () => <Pagination {...{ qData, setQData }} />,
+    // rowSelection: {
+    //   onChange: (selectedRowKeys) => setSelected(selectedRowKeys),
+    // },
+  };
+
+
 
   useEffect(() => {
-    listProducts();
-  }, [qData]);
+    list();
+  }, [qData.page, qData.limit]);
+
+  useEffect(() => {
+    servicesCategory.listCategory({ limit: 2000 }).then((res) => {
+      console.log("Category Data:", res?.data);
+      setCategory(res?.data?.categories || []);
+    });
+    servicesBrand.getAll({ limit: 2000 }).then((res) => {
+      setBrand(res?.data?.brands || []);
+    });
+  }, []);
+
 
   return (
     <Card
@@ -1230,85 +234,79 @@ export default function ProductManagement() {
       size="small"
       title={
         <Space>
-          <Button type="dashed" danger icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+          <Button
+            type="dashed"
+            danger
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+          >
             Back
           </Button>
-          Product Management
+          List of Products
         </Space>
       }
       extra={
         <Row justify="end" gutter={12}>
-          {selected.length > 0 && (
-            <Col>
-              <Popconfirm title={`Delete ${selected.length} products?`} onConfirm={deleteManyHandler}>
+          <Col>
+            {selected.length > 0 && (
+              <Popconfirm
+                title="Are you sure to delete selected?"
+                onConfirm={() => deleteData(selected)}
+                okText="Yes"
+                cancelText="No"
+              >
                 <Button type="primary" danger icon={<DeleteOutlined />}>
                   Delete Selected
                 </Button>
               </Popconfirm>
-            </Col>
-          )}
+            )}
+          </Col>
           <Col>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => addEditModalRef.current.openForm()}>
-              Add New Product
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => addNewModalRef.current.openForm()}
+            >
+              Add New
             </Button>
           </Col>
         </Row>
       }
     >
       <Table
-        bordered
-        loading={loading}
-        size="small"
-        columns={columns}
-        dataSource={data}
-        scroll={{ y: "calc(100vh - 340px)", x: 1400 }}
-        pagination={false}
-        title={() => <Search {...{ qData, setQData, listProducts, PRODUCT_STATUS }} />}
-        footer={() => <Pagination qData={qData} setQData={setQData} />}
+        {...tableProps}
+        pagination={{ position: ["none"], pageSize: qData.limit }}
+        columns={tableColumns}
+        dataSource={data.length ? data : []}
+        scroll={{ y: "calc(100vh - 340px)", x: "calc(100vw - 387px)" }}
       />
-
-      <AddEditProductModal ref={addEditModalRef} onSuccess={listProducts} />
-
-      <ProductViewModal
-        open={viewModal.open}
-        data={viewModal.data}
-        onClose={() => setViewModal({ open: false, data: null })}
-      />
+      <AddForm ref={addNewModalRef} {...{ list, category, brand }} />
     </Card>
   );
 }
 
-// ==================== Search Component ====================
-function Search({ qData, setQData, listProducts, PRODUCT_STATUS }) {
+function Search({
+  qData,
+  setQData,
+  list,
+
+}) {
   return (
-    <Form
-      onSubmitCapture={() => {
-        setQData((prev) => ({ ...prev, page: 1 }));
-        listProducts();
-      }}
-    >
-      <Row gutter={12}>
+    <Form onSubmitCapture={() => {
+      qData.page = 1 // Reset page on search
+      list();
+    }}>
+      <Row gutter={[12, 12]}>
         <Col span={6}>
           <Input
-            placeholder="Search by name, SKU..."
-            value={qData.search}
+            placeholder="Search"
+            value={qData.key}
             onChange={(e) => setQData({ ...qData, search: e.target.value })}
             allowClear
           />
         </Col>
-        <Col span={4}>
-          <Select
-            allowClear
-            placeholder="Filter by Status"
-            style={{ width: "100%" }}
-            value={qData.status}
-            onChange={(value) => setQData({ ...qData, status: value })}
-            options={PRODUCT_STATUS.map((item) => ({
-              label: item.label,
-              value: item.value,
-            }))}
-          />
-        </Col>
+
+        {/* Search Button */}
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -1318,3 +316,289 @@ function Search({ qData, setQData, listProducts, PRODUCT_STATUS }) {
     </Form>
   );
 }
+
+const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) => {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState({});
+  const [ajxRequesting, setAjxRequesting] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    openForm(dt) {
+      setOpen(true);
+      setData(dt ? { ...dt } : {});
+    },
+  }));
+
+  const handleChange = (value) => setData((prev) => ({ ...prev, ...value }));
+
+  const saveAdd = () => {
+    setAjxRequesting(true);
+    servicesProduct
+      .addProduct(data)
+      .then((res) => {
+        AntdMsg("Product added successfully");
+        list();
+        setOpen(false);
+      })
+      .catch((err) => {
+        AntdMsg(err?.error, "error");
+      })
+      .finally(() => setAjxRequesting(false));
+  };
+
+  const saveEdit = () => {
+    setAjxRequesting(true);
+    servicesProduct
+      .updateProduct(data?._id, data)
+      .then((res) => {
+        AntdMsg("Product updated successfully");
+        list();
+        setOpen(false);
+      })
+      .catch((err) => {
+        AntdMsg(err.error, "error");
+      })
+      .finally(() => setAjxRequesting(false));
+  };
+
+  const save = () => {
+    if (data._id) {
+      saveEdit();
+    } else {
+      saveAdd();
+    }
+  };
+
+
+  return (
+    <Modal
+      title={data._id ? "Edit Product" : "Add Product"}
+      style={{ top: 20 }}
+      open={open}
+      onOk={save}
+      okButtonProps={{ disabled: ajxRequesting }}
+      onCancel={() => setOpen(false)}
+      destroyOnClose
+      maskClosable={false}
+      width={1200}
+      footer={[
+        <Button key="cancel" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>,
+        <Button key="save" type="primary" onClick={save}>
+          Save
+        </Button>,
+      ]}
+    >
+      <Spin spinning={ajxRequesting}>
+        <Form layout="vertical">
+          <Row gutter={20} style={{ marginTop: 20 }}>
+            <Col span={12}>
+              <Form.Item label="Name" required>
+                <Input
+                  value={data?.name}
+                  onChange={(e) => handleChange({ name: e.target.value })}
+                  placeholder="Wireless Mouse"
+                />
+              </Form.Item>
+            </Col>
+
+            {/* <Col span={12}>
+              <Form.Item label="Choose Category" required>
+                <Cascader
+                  style={{ width: "100%" }}
+                  value={data?.category_id}
+                  options={category}
+                  onChange={(e) => {
+                    handleChange({ category_id: e });
+                  }}
+                  placeholder="Choose categories"
+                  maxTagCount="responsive"
+                  showCheckedStrategy={SHOW_CHILD}
+                />
+              </Form.Item>
+            </Col> */}
+
+            <Col span={12}>
+              <Form.Item label="Choose Category" required>
+                <Select
+                  style={{ width: "100%" }}
+                  value={data?.categoryId}
+                  onChange={(value) => handleChange({ categoryId: value })}
+                  placeholder="Choose category"
+                  options={(category || [])?.map((cat) => ({
+                    label: cat?.name,
+                    value: cat?._id,
+                  }))}
+                  notFoundContent="No categories available"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item label="Choose Brand" required>
+                <Select
+                  style={{ width: "100%" }}
+                  value={data?.brandId}
+                  onChange={(value) => handleChange({ brandId: value })}
+                  placeholder="Choose brand"
+                  options={(brand || [])?.map((cat) => ({
+                    label: cat?.name,
+                    value: cat?._id,
+                  }))}
+                  notFoundContent="No brands available"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item label="Description" required>
+                <Input.TextArea
+                  value={data?.description}
+                  onChange={(e) =>
+                    handleChange({ description: e.target.value })
+                  }
+                  placeholder="A high-precision wireless mouse with ergonomic design."
+                  rows={4}
+                />
+              </Form.Item>
+            </Col>
+
+
+
+            {/* {useVariants == false ? (
+              <> */}
+            <Col span={12}>
+              <Form.Item label="SKU" required>
+                <Input
+                  value={data?.sku}
+                  onChange={(e) => handleChange({ sku: e.target.value })}
+                  placeholder="WMOUSE123"
+                />
+              </Form.Item>
+            </Col>
+
+
+            <Col span={12}>
+              <Form.Item label=" Price" required>
+                <Input
+                  type="number"
+                  value={data?.price}
+                  onChange={(e) =>
+                    handleChange({
+                      price: Number(util.handleInteger(e.target.value)),
+                    })
+                  }
+                  placeholder="800"
+                />
+              </Form.Item>
+            </Col>
+
+
+
+            <Col span={12}>
+              <Form.Item label="Discount" required>
+                <Input
+                  type="number"
+                  value={data?.discount}
+                  onChange={(e) =>
+                    handleChange({
+                      discount: Number(util.handleInteger(e.target.value)),
+                    })
+                  }
+                  placeholder="50"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item label="GST Percentage" required>
+                <Input
+                  type="number"
+                  value={data?.gst}
+                  onChange={(e) =>
+                    handleChange({
+                      gst: Number(util.handleInteger(e.target.value)),
+                    })
+                  }
+                  placeholder="18%"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item label=" Stock">
+                <Input
+                  type="number"
+                  value={data?.stock}
+                  onChange={(e) =>
+                    handleChange({
+                      stock: Number(util.handleInteger(e.target.value)),
+                    })
+                  }
+                  placeholder="100"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Upload Thumbnail Image url"
+                required
+              // extra={
+              //   <span style={{ fontSize: "12px", color: "#888" }}>
+              //     Recommended:size 400×242px (max 5 MB) for good design
+              //     standards.
+              //   </span>
+              // }
+              >
+                <UploadImage
+                  value={
+                    data?.thumbnail ? [{ url: data?.thumbnail }] : []
+                  } // wrap single value in array
+                  count={1} // single file only
+                  // requiredWidth={400}
+                  // requiredHeight={242}
+                  onChange={(v) =>
+                    handleChange({
+                      thumbnail: v?.[0]?.url || "", // store only first file's URL
+                    })
+                  }
+                  listType="picture-card"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item
+                label="Upload Image "
+                required
+              // extra={
+              //   <span style={{ fontSize: "12px", color: "#888" }}>
+              //     Recommended:size 400×242px (max 5 MB) for good design
+              //     standards.
+              //   </span>
+              // }
+              >
+
+                <UploadImage
+                  value={(data?.images || [])?.map((url) => ({ url }))}
+                  count={10}
+                  onChange={(files) =>
+                    handleChange({
+                      images: files?.map((file) => file.url),
+                    })
+                  }
+                  listType="picture-card"
+                />
+
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Spin>
+    </Modal>
+  );
+});
+
+

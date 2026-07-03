@@ -39,6 +39,7 @@ import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import util from "../../../utils/util";
 import dayjs from "dayjs";
+import UserDetail from ".";
 // import UserDetail from ".";
 
 export default function User() {
@@ -50,6 +51,7 @@ export default function User() {
 
   const [UserConstants, setUserConstants] = useState({
     role: roles.USER || 4, // fallback
+    userStatus: util.constants()?.USER_STATUS || {},
   });
 
   const [qData, setQData] = useState({
@@ -91,18 +93,18 @@ export default function User() {
       dataIndex: "email",
       render: (email) => email || "Not Specified",
     },
-    // {
-    //   title: "Block",
-    //   dataIndex: "isBlock",
-    //   render: (isBlock, record) => (
-    //     <Switch
-    //       checked={record?.isBlock}
-    //       onChange={() => blockHandler(record._id)}
-    //       checkedChildren="Yes"
-    //       unCheckedChildren="No"
-    //     />
-    //   ),
-    // },
+    {
+      title: "Block",
+      dataIndex: "status",
+      render: (v, record) => (
+        <Switch
+          checked={v === UserConstants?.userStatus?.BLOCKED}
+          onChange={() => blockHandler(record?._id)}
+          checkedChildren="Yes"
+          unCheckedChildren="No"
+        />
+      ),
+    },
 
     {
       title: "Action",
@@ -112,7 +114,7 @@ export default function User() {
         <Space>
           <Popconfirm
             title="Are you sure to delete this?"
-            onConfirm={() => deleteData(row._id)}
+            onConfirm={() => deleteData(row?._id)}
             okText="Yes"
             cancelText="No"
           >
@@ -134,61 +136,40 @@ export default function User() {
     },
   ];
 
-function list() {
-  setLoading(true);
-  servicesUser
-    .listUser(qData)
-    .then((res) => {
-      const responseData = res?.data?.users || [];
-      const pagination = res?.data?.pagination || {};
-
-      setData(responseData.map((v) => ({ ...v, key: v._id })));
-
-      setQData((prev) => ({
-        ...prev,
-        limit: pagination?.limit,      // ✅ Fixed: use 'limit'
-        page: pagination?.page,         // ✅ Fixed: use 'page'
-        total: pagination?.total,       // ✅ Fixed: use 'total'
-      }));
-    })
-    .catch(() => {
-      message.error("Failed to fetch data");
-    })
-    .finally(() => setLoading(false));
-}
-
-const deleteData = (id) => {
-  setLoading(true);
-
-  servicesUser
-    .delete(id) // ✅ pass id directly
-    .then((res) => {
-      message.success(res?.message || "success");
-      list();
-      setSelected([]);
-    })
-    .catch((err) => {
-      message.error(err?.message);
-    })
-    .finally(() => setLoading(false));
-};
-
-  const activeHandler = (id) => {
+  function list() {
     setLoading(true);
     servicesUser
-      .userToggle(id)
+      .listUser(qData)
       .then((res) => {
-        list();
-        message.success(res?.message);
+        setData(res?.data?.users?.map((v) => ({ ...v, key: v._id })));
+        setQData({
+          ...qData,
+          limit: res?.data?.pagination?.limit,
+          page: res?.data?.pagination?.page,
+          total: res?.data?.pagination?.total,
+        });
+      })
+      .catch((e) => {
+        message.error(e?.message || "Something went wrong");
+      })
+      .finally(() => setLoading(false));
+  }
 
+
+  const deleteData = (id) => {
+    setLoading(true);
+    servicesUser
+      .delete(id)
+      .then((res) => {
+        message.success(res?.message || "Deleted successfully");
+        list();
         setSelected([]);
       })
       .catch((err) => {
-        message.error(err?.message);
+        message.error(err?.message || "Failed to delete user");
       })
       .finally(() => setLoading(false));
   };
-
   const blockHandler = (id) => {
     setLoading(true);
     servicesUser
@@ -222,7 +203,7 @@ const deleteData = (id) => {
 
   useEffect(() => {
     list();
-  }, [qData.page, qData.limit]);
+  }, [qData?.page, qData?.limit]);
 
   return (
     <Card
@@ -257,15 +238,7 @@ const deleteData = (id) => {
               </Popconfirm>
             )}
           </Col>
-          {/* <Col>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => addNewModalRef.current.openForm()}
-                        >
-                            Add New
-                        </Button>
-                    </Col> */}
+
         </Row>
       }
     >
@@ -310,7 +283,7 @@ function Search({ qData, setQData, list }) {
 }
 
 const ViewUserModal = forwardRef((props, ref) => {
-  const {} = props;
+  const { } = props;
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({});
 
@@ -324,113 +297,15 @@ const ViewUserModal = forwardRef((props, ref) => {
   return (
     <Modal
       style={{ top: 20 }}
-      title="User Details"
+      title={data?.name || "User Details"}
       destroyOnClose
       maskClosable={false}
       open={open}
       footer={<Button onClick={() => setOpen(false)}>Close</Button>}
       onCancel={() => setOpen(false)}
-      width={800}
+      width={1200}
     >
-      <Spin spinning={false}>
-        <Form layout="vertical">
-          <Row gutter={20} style={{ marginTop: 20 }}>
-            <Col span={24} style={{ textAlign: "center", marginBottom: 20}}>
-              <Image
-                width={100}
-                height={100}
-                src={data?.avatar || "/images.png"}
-                fallback="/images.png"
-                alt="Profile"
-                style={{
-                  objectFit: "cover",
-                  borderRadius: "50%",
-                  border: "2px solid #f0f0f0",
-                }}
-              />
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Name">
-                <Input value={data?.name || "Not Specified"}   style={{ color: "#000" }} disabled />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Email">
-                <Input value={data?.email || "Not Specified"}   style={{ color: "#000" }} disabled />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Phone">
-                <Input value={data?.phone || "Not Specified"}   style={{ color: "#000" }} disabled />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Role">
-                <Input 
-                  value={
-                    data?.role === 4 ? "User" : 
-                    data?.role === 3 ? "Admin" : 
-                    data?.role === 2 ? "Manager" : 
-                    data?.role === 1 ? "Super Admin" : 
-                    "Not Specified"
-                  } 
-                  style={{ color: "#000" }}
-                  disabled 
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Status">
-                <Tag color={data?.status === 1 ? "green" : "red"}>
-                  {data?.status === 1 ? "Active" : "Inactive"}
-                </Tag>
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Created At">
-                <Input 
-                  value={data?.createdAt ? dayjs(data.createdAt).format("DD MMM YYYY, hh:mm A") : "-"} 
-                  style={{ color: "#000" }}
-                  disabled 
-
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Last Login">
-                <Input 
-                  value={data?.lastLoginAt ? dayjs(data.lastLoginAt).format("DD MMM YYYY, hh:mm A") : "Never"} 
-                  style={{ color: "#000" }}
-                  disabled 
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Updated At">
-                <Input 
-                  value={data?.updatedAt ? dayjs(data.updatedAt).format("DD MMM YYYY, hh:mm A") : "-"} 
-                  style={{ color: "#000" }}
-                  disabled 
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="User ID">
-                <Input value={data?._id || "-"}   style={{ color: "#000" }} disabled />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Spin>
+      <UserDetail {...{ data }} />
     </Modal>
   );
 });

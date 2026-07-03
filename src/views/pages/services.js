@@ -68,7 +68,7 @@ export default function Services() {
       render: (is_active, record) => (
         <Switch
           checked={record?.is_active}
-          onChange={() => activeHandler(record._id)}
+          onChange={() => activeHandler(record?._id)}
           checkedChildren="Active"
           unCheckedChildren="Inactive"
         />
@@ -83,7 +83,7 @@ export default function Services() {
         <Space>
           <Popconfirm
             title="Are you sure to delete this?"
-            onConfirm={() => deleteData(row._id)}
+            onConfirm={() => deleteData(row?._id)}
             okText="Yes"
             cancelText="No"
           >
@@ -148,14 +148,14 @@ export default function Services() {
         setSelected([]);
       })
       .catch((err) => {
-        message.error(err?.message);
+        message.error(err?.message||"");
       })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     list();
-  }, [qData.page, qData.limit]);
+  }, []);
 
   const tableProps = {
     bordered: true,
@@ -165,57 +165,7 @@ export default function Services() {
     footer: () => <Pagination {...{ qData, setQData }} />,
   };
 
-  //   function buildCategoryTree(data) {
-  //     const map = {};
-  //     const roots = [];
-
-  //     data.forEach((item) => {
-  //       map[item._id] = {
-  //         label: item?.name,
-  //         value: item?._id,
-  //         children: [],
-  //       };
-  //     });
-
-  //     data.forEach((item) => {
-  //       if (item?.parent_category) {
-  //         map[item?.parent_category]?.children.push(map[item._id]);
-  //       } else {
-  //         roots.push(map[item._id]);
-  //       }
-  //     });
-
-  //     // Remove empty children arrays
-  //     function clean(node) {
-  //       if (!node.children?.length) {
-  //         delete node.children;
-  //       } else {
-  //         node.children?.forEach(clean);
-  //       }
-  //     }
-
-  //     roots.forEach(clean);
-  //     return roots;
-  //   }
-
-  //   useEffect(() => {
-
-  //     servicesCategory.listCategory().then((res) => {
-  //       console.log("Category Data:", res?.data);
-
-  //       const treeData = buildCategoryTree(res?.data);
-  //       console.log("Category Tree:", treeData);
-
-  //       setCategory(treeData || []);
-  //     });
-  //   }, [qData.page, qData.limit]);
-
-  // useEffect(() => {
-  //   servicesCategory.listCategory().then((res) => {
-  //     console.log("Category Data:", res?.data);
-  //     setCategory(res?.data);
-  //   });
-  // }, [qData.page, qData.limit]);
+  
   return (
     <Card
       bordered={false}
@@ -289,66 +239,15 @@ const AddForm = forwardRef(({ list, servicesConstants }, ref) => {
     { label: "SMS", value: servicesConstants?.TYPE?.SMS },
     { label: "EMAIL", value: servicesConstants?.TYPE?.EMAIL },
     { label: "PAYMENT", value: servicesConstants?.TYPE?.PAYMENT },
-    { label: "ASTROLOGY", value: servicesConstants?.TYPE?.ASTROLOGY },
-    { label: "OTHER", value: servicesConstants?.TYPE?.OTHER },
-    { label: "OAUTH", value: servicesConstants?.TYPE?.OAUTH },
-    { label: "CALL", value: servicesConstants?.TYPE?.CALL },
     { label: "SHIPPING", value: servicesConstants?.TYPE?.SHIPPING },
-    { label: "APP_OAUTH", value: servicesConstants?.TYPE?.APP_OAUTH },
+    
   ];
   const SERVICE_PROVIDER = [
-    { label: "TWILIO", value: servicesConstants?.PROVIDER?.TWILIO },
     { label: "FAST2SMS", value: servicesConstants?.PROVIDER?.FAST2SMS },
-    { label: "SENDGRID", value: servicesConstants?.PROVIDER?.SENDGRID },
-    { label: "MAILGUN", value: servicesConstants?.PROVIDER?.MAILGUN },
     { label: "RAZORPAY", value: servicesConstants?.PROVIDER?.RAZORPAY },
-    { label: "PAYTM", value: servicesConstants?.PROVIDER?.PAYTM },
-    { label: "STRIPE", value: servicesConstants?.PROVIDER?.STRIPE },
-    {
-      label: "VEDICASTROAPI",
-      value: servicesConstants?.PROVIDER?.VEDICASTROAPI,
-    },
-    {
-      label: "ASTRO_API",
-      value: servicesConstants?.PROVIDER?.ASTRO_API,
-    },
-
-    {
-      label: "CUSTOM",
-      value: servicesConstants?.PROVIDER?.CUSTOM,
-    },
-    {
-      label: "GOOGLE",
-      value: servicesConstants?.PROVIDER?.GOOGLE,
-    },
-    {
-      label: "FACEBOOK",
-      value: servicesConstants?.PROVIDER?.FACEBOOK,
-    },
-    {
-      label: "APPLE",
-      value: servicesConstants?.PROVIDER?.APPLE,
-    },
-    {
-      label: "AGORA",
-      value: servicesConstants?.PROVIDER?.AGORA,
-    },
-    {
-      label: "PHONEPAY",
-      value: servicesConstants?.PROVIDER?.PHONEPAY,
-    },
-    {
-      label: "SHIPROCKET",
-      value: servicesConstants?.PROVIDER?.SHIPROCKET,
-    },
-     {
-      label: "DELHIVERY",
-      value: servicesConstants?.PROVIDER?.DELHIVERY,
-    },
-     {
-      label: "BLUEDART",
-      value: servicesConstants?.PROVIDER?.BLUEDART,
-    },
+    { label: "PAYTM", value: servicesConstants?.PROVIDER?.GMAIL },
+    { label: "STRIPE", value: servicesConstants?.PROVIDER?.SHIPROCKET },
+   
   ];
   const handleChange = (value) => setData((prev) => ({ ...prev, ...value }));
 
@@ -358,12 +257,12 @@ const AddForm = forwardRef(({ list, servicesConstants }, ref) => {
       .addServices(data)
       .then((res) => {
         console.log("Add Services Response:", res);
-        AntdMsg(res.message);
+        AntdMsg(res?.message);
         list();
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err.message, "error");
+        AntdMsg(err?.message, "error");
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -371,14 +270,14 @@ const AddForm = forwardRef(({ list, servicesConstants }, ref) => {
   const saveEdit = () => {
     setAjxRequesting(true);
     servicesExternal
-      .updateServices(data._id, data)
+      .updateServices(data?._id, data)
       .then((res) => {
-        AntdMsg(res.message);
+        AntdMsg(res?.message);
         list();
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err.error, "error");
+        AntdMsg(err?.message, "error");
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -395,7 +294,7 @@ const AddForm = forwardRef(({ list, servicesConstants }, ref) => {
 
   return (
     <Modal
-      title={data._id ? "Edit Services" : "Add Services"}
+      title={data?._id ? "Edit Services" : "Add Services"}
       style={{ top: 20 }}
       open={open}
       onOk={save}
@@ -474,7 +373,7 @@ const AddForm = forwardRef(({ list, servicesConstants }, ref) => {
                 <Input
                   value={data?.base_url}
                   onChange={(e) => handleChange({ base_url: e.target.value })}
-                  placeholder="https://api.vedicastroapi.com"
+                  
                 />
               </Form.Item>
             </Col>

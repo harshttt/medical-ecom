@@ -13,7 +13,9 @@ import {
   Space,
   Modal,
   Select,
-  Tag,
+  Switch,
+  Cascader,
+  TreeSelect,
 } from "antd";
 import {
   DeleteOutlined,
@@ -29,166 +31,83 @@ import React, {
   useRef,
 } from "react";
 import servicesAdmin from "../../../services/admin-vendor";
-import AdminCategoryService from "../../../services/category"; // ← adjust path if needed
+import servicesCategory from "../../../services/category";
 import Pagination from "../../components/Pagination";
 import { useNavigate } from "react-router-dom";
+// import UploadImage from '../../utils/UploadImage';
 import util from "../../../utils/util";
 import { AntdMsg } from "../../../utils/Antd";
+const { SHOW_CHILD } = Cascader;
 
-// ── Vendor verification status constants (from VENDOR_STATUS) ──────────────
-const VENDOR_STATUS = {
-  PENDING: 1,
-  APPROVED: 2,
-  REJECTED: 3,
-  SUSPENDED: 4,
-};
-
-const VERIFICATION_STATUS_OPTIONS = [
-  { label: "PENDING", value: VENDOR_STATUS.PENDING },
-  { label: "APPROVED", value: VENDOR_STATUS.APPROVED },
-  { label: "REJECTED", value: VENDOR_STATUS.REJECTED },
-  { label: "SUSPENDED", value: VENDOR_STATUS.SUSPENDED },
-];
-
-// Map numeric value → label string
-function getStatusLabel(val) {
-  return Object.entries(VENDOR_STATUS).find(([, v]) => v === val)?.[0] || "-";
-}
-
-// Color tag per status
-const STATUS_COLOR = {
-  [VENDOR_STATUS.PENDING]: "gold",
-  [VENDOR_STATUS.APPROVED]: "green",
-  [VENDOR_STATUS.REJECTED]: "red",
-  [VENDOR_STATUS.SUSPENDED]: "orange",
-};
-
-export default function UserAdmin() {
+export default function UserVendor() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [categories, setCategories] = useState([]); // ← all categories for display
-  const [qData, setQData] = useState({ page: 1, limit: 10, role: 3 });
+  const [category, setCategory] = useState([]);
+  const [constants, setConstants] = useState({
+    role: util.constants()?.ROLES?.VENDOR || null,
+    varificationStatus: util.constants()?.VENDOR_STATUS || {},
+  });
+  const [qData, setQData] = useState({
+    page: 1,
+    limit: 10,
+    role: constants?.role,
+  });
+
+  const VARIFICATION_STATUS = [
+    {
+      label: "PENDING",
+      value: constants?.varificationStatus?.PENDING,
+    },
+    {
+      label: "APPROVED",
+      value: constants?.varificationStatus?.APPROVED,
+    },
+    {
+      label: "REJECTED",
+      value: constants?.varificationStatus?.REJECTED,
+    },
+    {
+      label: "UNDER_REVIEW",
+      value: constants?.varificationStatus?.UNDER_REVIEW,
+    },
+  ];
 
   const addNewModalRef = useRef();
-
-  // ── Fetch vendors ──────────────────────────────────────────────────────────
-  function list() {
-    setLoading(true);
-    servicesAdmin
-      .list(qData)
-      .then((res) => {
-        const users = res?.data?.users || [];
-        setData(users.map((v) => ({ ...v, key: v._id })));
-        const pg = res?.data?.pagination;
-        if (pg) {
-          setQData((prev) => ({
-            ...prev,
-            total: pg.total,
-            page: pg.page,
-            limit: pg.limit,
-          }));
-        }
-      })
-      .catch(() => message.error("Failed to fetch vendors"))
-      .finally(() => setLoading(false));
-  }
-
-  // ── Fetch all categories (for display labels in table) ────────────────────
-  function fetchCategories() {
-    AdminCategoryService.listCategory({ page: 1, limit: 1000 })
-      .then((res) => {
-        const cats = res?.data?.categories || [];
-        setCategories(cats);
-      })
-      .catch(() => {
-        /* non-critical */
-      });
-  }
-
-  useEffect(() => {
-    list();
-    fetchCategories();
-  }, [qData.page, qData.limit]);
-
-  // Helper: resolve category _id → name
-  const renderCategoryTags = (categoryList = []) => {
-    // Check if categoryList is valid and has items
-    if (!categoryList || categoryList.length === 0) return "-";
-
-    return categoryList.map((cat) => (
-      <Tag key={cat._id} color="blue" style={{ marginBottom: 2 }}>
-        {cat.name}
-      </Tag>
-    ));
-  };
-
-  // ── Delete ────────────────────────────────────────────────────────────────
-  const deleteData = (id) => {
-    servicesAdmin
-      .delete(id)
-      .then((res) => {
-        message.success(res?.message || "Deleted successfully");
-        list();
-        setSelected([]);
-      })
-      .catch((err) => message.error(err?.message));
-  };
-
-  // ── Columns ───────────────────────────────────────────────────────────────
+  console.log(constants);
   const columns = [
     {
       title: "S.No",
-      width: 55,
-      render: (_, __, index) => index + 1 + (qData.page - 1) * qData.limit,
+      dataIndex: "sno",
+      width: 50,
+      render: (text, record, index) => index + 1,
     },
     {
-      title: "Owner Name",
-      render: (_, r) => r?.vendor?.ownerName || r?.name || "-",
+      title: "Name",
+      dataIndex: "name",
     },
-    {
-      title: "Business Name",
-      render: (_, r) => r?.vendor?.businessName || "-",
-    },
-    { title: "Email", dataIndex: "email" },
-    { title: "Phone", dataIndex: "phone" },
-    {
-      title: "Categories",
-      // Pass the categories array directly
-      render: (_, r) => renderCategoryTags(r?.vendor?.categories),
-    },
+
     {
       title: "Verification Status",
-      render: (_, r) => {
-        const val = r?.vendor?.verificationStatus;
-        if (val === undefined || val === null) return "-";
+      render: (text, record) => {
         return (
-          <Tag color={STATUS_COLOR[val] || "default"}>
-            {getStatusLabel(val)}
-          </Tag>
+          Object.entries(constants?.varificationStatus || {}).find(
+            ([key, val]) => val === record?.vendor?.verificationStatus
+          )?.[0] || "-"
         );
       },
     },
-    {
-      title: "Can Sell",
-      render: (_, r) =>
-        r?.vendor ? (
-          <Tag color={r.vendor.canSell ? "green" : "default"}>
-            {r.vendor.canSell ? "Yes" : "No"}
-          </Tag>
-        ) : (
-          "-"
-        ),
-    },
+
     {
       title: "Action",
-      width: 100,
-      render: (_, row) => (
+      dataIndex: "_id",
+      width: 80,
+      render: (v, row) => (
         <Space>
           <Popconfirm
             title="Are you sure to delete this?"
-            onConfirm={() => deleteData(row._id)}
+            onConfirm={() => deleteData(row?._id)}
             okText="Yes"
             cancelText="No"
           >
@@ -210,18 +129,83 @@ export default function UserAdmin() {
     },
   ];
 
+  function list() {
+    setLoading(true);
+    servicesAdmin
+      .list(qData)
+      .then((res) => {
+        setData(res?.data?.users?.map((v) => ({ ...v, key: v._id })));
+        setQData({
+          ...qData,
+          limit: res?.data?.pagination?.limit,
+          page: res?.data?.pagination?.page,
+          total: res?.data?.pagination?.total,
+        });
+      })
+      .catch((e) => {
+        message.error(e?.message || "");
+      })
+      .finally(() => setLoading(false));
+  }
+
+  const deleteData = (id) => {
+    servicesAdmin
+      .delete(id)
+      .then((res) => {
+        message.success(res?.message);
+        list();
+        setSelected([]);
+      })
+      .catch((err) => {
+        message.error(err?.message);
+      });
+  };
+
+  const activeHandler = (id) => {
+    servicesAdmin
+      .toggle(id)
+      .then((res) => {
+        message.success(res?.message || "Status updated successfully");
+        list();
+        setSelected([]);
+      })
+      .catch((err) => {
+        message.error(err?.message);
+      });
+  };
+
   const tableColumns = columns.map((item) => ({ ...item, ellipsis: false }));
+
   tableColumns[0].fixed = true;
   tableColumns[tableColumns.length - 1].fixed = "right";
 
   const tableProps = {
     bordered: true,
     loading,
-    title: () => <Search qData={qData} setQData={setQData} list={list} />,
+    title: () => (
+      <Search
+        {...{
+          qData,
+          setQData,
+          list,
+        }}
+      />
+    ),
     size: "small",
     showHeader: true,
-    footer: () => <Pagination qData={qData} setQData={setQData} />,
+    footer: () => <Pagination {...{ qData, setQData }} />,
   };
+
+  useEffect(() => {
+    list();
+  }, [qData?.page, qData?.limit]);
+
+  useEffect(() => {
+    servicesCategory.listCategory().then((res) => {
+      setCategory(res?.data?.categories);
+    });
+
+  }, []);
 
   return (
     <Card
@@ -237,7 +221,7 @@ export default function UserAdmin() {
           >
             Back
           </Button>
-          List of Vendors
+          List of Vendor
         </Space>
       }
       extra={
@@ -245,7 +229,7 @@ export default function UserAdmin() {
           <Col>
             {selected.length > 0 && (
               <Popconfirm
-                title="Are you sure to delete selected vendors?"
+                title="Are you sure to delete selected images?"
                 onConfirm={() => deleteData(selected)}
                 okText="Yes"
                 cancelText="No"
@@ -272,37 +256,31 @@ export default function UserAdmin() {
         {...tableProps}
         pagination={{ position: ["none"], pageSize: qData.limit }}
         columns={tableColumns}
-        dataSource={data}
+        dataSource={data.length ? data : []}
         scroll={{ y: "calc(100vh - 340px)", x: "calc(100vw - 387px)" }}
       />
-      <AddForm
-        ref={addNewModalRef}
-        list={list}
-        categories={categories} // ← pass categories to form
-        fetchCategories={fetchCategories} // ← allow form to refresh if needed
-      />
+      <AddForm ref={addNewModalRef} {...{ list, constants, VARIFICATION_STATUS, category }} />
     </Card>
   );
 }
 
-// ── Search bar ───────────────────────────────────────────────────────────────
-function Search({ qData, setQData, list }) {
+function Search({ qData, setQData, list, }) {
   return (
-    <Form
-      onSubmitCapture={() => {
-        qData.page = 1;
-        list();
-      }}
-    >
+    <Form onSubmitCapture={() => {
+      qData.page = 1; // Reset page on search // Reset page on search
+      list();
+    }}>
       <Row gutter={[12, 12]}>
         <Col span={6}>
           <Input
             placeholder="Search"
-            value={qData.search}
+            value={qData.key}
             onChange={(e) => setQData({ ...qData, search: e.target.value })}
             allowClear
           />
         </Col>
+
+        {/* Search Button */}
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -313,8 +291,7 @@ function Search({ qData, setQData, list }) {
   );
 }
 
-// ── Add / Edit modal ─────────────────────────────────────────────────────────
-const AddForm = forwardRef(({ list, categories, fetchCategories }, ref) => {
+const AddForm = forwardRef(({ list, constants, VARIFICATION_STATUS, category }, ref) => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({});
   const [ajxRequesting, setAjxRequesting] = useState(false);
@@ -322,98 +299,63 @@ const AddForm = forwardRef(({ list, categories, fetchCategories }, ref) => {
   useImperativeHandle(ref, () => ({
     openForm(dt) {
       setOpen(true);
-      if (dt) {
-        // Flatten vendor fields into form state for edit
-        setData({
-          ...dt,
-          ownerName: dt?.vendor?.ownerName || dt?.name || "",
-          businessName: dt?.vendor?.businessName || "",
-          verificationStatus: dt?.vendor?.verificationStatus ?? undefined,
-          categories: dt?.vendor?.categories || [],
-        });
-      } else {
-        setData({});
-      }
+      setData(dt ? { ...dt?.vendor } : {});
     },
   }));
 
-  // ── CREATE ────────────────────────────────────────────────────────────────
+  const handleChange = (value) => setData((prev) => ({ ...prev, ...value }));
+
   const saveAdd = () => {
     setAjxRequesting(true);
-    const payload = {
-      ownerName: data.ownerName,
-      businessName: data.businessName,
-      email: data.email,
-      phone: data.phone,
-      password: data.password,
-      verificationStatus: data.verificationStatus,
-      categories: data.categories || [],
-    };
     servicesAdmin
-      .add(payload)
+      .add(data)
       .then((res) => {
         AntdMsg(res.message);
         list();
         setOpen(false);
       })
-      .catch((err) => AntdMsg(err.message, "error"))
+      .catch((err) => {
+        AntdMsg(err.message, "error");
+      })
       .finally(() => setAjxRequesting(false));
   };
 
-  // ── UPDATE ────────────────────────────────────────────────────────────────
   const saveEdit = () => {
     setAjxRequesting(true);
-    const payload = {
-      verificationStatus: data.verificationStatus,
-      categories: data.categories || [],
-    };
     servicesAdmin
-      .update(data._id, payload)
+      .update(data?._id, data)
       .then((res) => {
         AntdMsg(res.message);
         list();
         setOpen(false);
       })
-      .catch((err) => AntdMsg(err.message, "error"))
+      .catch((err) => {
+        AntdMsg(err.message, "error");
+      })
       .finally(() => setAjxRequesting(false));
   };
 
-  const save = () => (data._id ? saveEdit() : saveAdd());
-  const isEdit = !!data._id;
+  const save = () => {
+    if (data._id) {
+      saveEdit();
+    } else {
+      saveAdd();
+    }
+  };
 
-  // Category options for Select
-const categoryOptions = categories.flatMap((category) => {
-  const options = [
-    {
-      label: category.name,
-      value: category._id,
-    },
-  ];
+  const convertToTreeData = (categories = []) =>
 
-  if (category.subcategories?.length) {
-    category.subcategories.forEach((sub) => {
-      options.push({
-        label: `${category.name} > ${sub.name}`,
-        value: sub._id,
-      });
+    categories.map((category) => ({
+      title: category?.name,
+      value: category?._id,
+      key: category?._id,
+      children: convertToTreeData(category?.subcategories || []),
+    }));
 
-      // If nested subcategories exist
-      if (sub.subcategories?.length) {
-        sub.subcategories.forEach((child) => {
-          options.push({
-            label: `${category.name} > ${sub.name} > ${child.name}`,
-            value: child._id,
-          });
-        });
-      }
-    });
-  }
-  return options;
-});
 
   return (
     <Modal
-      title={isEdit ? "Edit Vendor" : "Add Vendor"}
+      title={data._id ? "Edit Vendor" : "Add Vendor"}
       style={{ top: 20 }}
       open={open}
       onOk={save}
@@ -421,17 +363,12 @@ const categoryOptions = categories.flatMap((category) => {
       onCancel={() => setOpen(false)}
       destroyOnClose
       maskClosable={false}
-      width={640}
+      width={1500}
       footer={[
         <Button key="cancel" onClick={() => setOpen(false)}>
           Cancel
         </Button>,
-        <Button
-          key="save"
-          type="primary"
-          onClick={save}
-          loading={ajxRequesting}
-        >
+        <Button key="save" type="primary" onClick={save}>
           Save
         </Button>,
       ]}
@@ -439,150 +376,105 @@ const categoryOptions = categories.flatMap((category) => {
       <Spin spinning={ajxRequesting}>
         <Form layout="vertical">
           <Row gutter={20}>
-            {/* ── CREATE-only fields ──────────────────────────────────── */}
-            {!isEdit && (
-              <>
-                <Col span={12}>
-                  <Form.Item label="Owner Name" required>
-                    <Input
-                      value={data?.ownerName}
-                      onChange={(e) =>
-                        setData({ ...data, ownerName: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item label="Business Name" required>
-                    <Input
-                      value={data?.businessName}
-                      onChange={(e) =>
-                        setData({ ...data, businessName: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item label="Email" required>
-                    <Input
-                      type="email"
-                      value={data?.email}
-                      onChange={(e) =>
-                        setData({ ...data, email: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item label="Phone" required>
-                    <Input
-                      maxLength={10}
-                      value={data?.phone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-
-                        setData({
-                          ...data,
-                          phone: value,
-                        });
-                      }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={24}>
-                  <Form.Item label="Password" required>
-                    <Input.Password
-                      value={data?.password}
-                      onChange={(e) =>
-                        setData({ ...data, password: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-              </>
-            )}
-
-            {/* ── EDIT: read-only context fields ──────────────────────── */}
-            {isEdit && (
-              <>
-                <Col span={12}>
-                  <Form.Item label="Owner Name">
-                    <Input
-                      value={data?.ownerName}
-                      onChange={(e) =>
-                        setData({ ...data, ownerName: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col span={12}>
-                  <Form.Item label="Business Name">
-                    <Input
-                      value={data?.businessName}
-                      onChange={(e) =>
-                        setData({ ...data, businessName: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item label="Email">
-                    <Input
-                      value={data?.email}
-                      onChange={(e) =>
-                        setData({ ...data, email: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item label="Phone">
-                    <Input
-                      value={data?.phone}
-                      onChange={(e) =>
-                        setData({ ...data, phone: e.target.value })
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-              </>
-            )}
-
-            {/* ── Verification Status ──────────────────────────────────── */}
             <Col span={12}>
-              <Form.Item label="Verification Status">
+              <Form.Item label="Owner Name" required>
+                <Input
+
+                  value={data?.ownerName}
+                  onChange={(e) => setData({ ...data, ownerName: e.target.value })}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="BusinessName" required>
+                <Input
+                  //   disabled={id ? true : false}
+                  value={data?.businessName}
+                  onChange={(e) => setData({ ...data, businessName: e.target.value })}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Mobile Number" required>
+                <Input
+                  //   disabled={id ? true : false}
+                  value={data?.phone}
+                  onChange={(e) =>
+                    setData({
+                      ...data,
+                      phone: util.handleInteger(e.target.value),
+                    })
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Email" required>
+                <Input
+                  //   disabled={id ? true : false}
+                  type="email"
+                  value={data?.email}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Password" required>
+                <Input
+                  //   disabled={id ? true : false}
+                  type="password"
+                  value={data?.password}
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item label="Verification Status" >
                 <Select
                   style={{ width: "100%" }}
                   value={data?.verificationStatus}
                   onChange={(value) =>
                     setData({ ...data, verificationStatus: value })
                   }
-                  placeholder="Select status"
-                  options={VERIFICATION_STATUS_OPTIONS}
+                  placeholder=""
+                  options={(VARIFICATION_STATUS || []).map((cat) => ({
+                    label: cat.label,
+                    value: cat.value,
+                  }))}
                 />
               </Form.Item>
             </Col>
 
-            {/* ── Categories (multi-select) ────────────────────────────── */}
             <Col span={24}>
-              <Form.Item label="Categories">
-                <Select
-                  mode="multiple"
-                  allowClear
+              <Form.Item label="Allowed Categories" required>
+                <TreeSelect
                   style={{ width: "100%" }}
-                  placeholder="Select categories"
-                  value={data?.categories?.map((cat) => cat._id || cat) || []}
-                  onChange={(values) =>
-                    setData({ ...data, categories: values })
+                  treeData={convertToTreeData(category || [])}
+                  value={data?.categories}
+                  onChange={(value) =>
+                    setData({
+                      ...data,
+                      categories: value,
+                    })
                   }
-                  options={categoryOptions}
-                  filterOption={(input, option) =>
-                    option?.label?.toLowerCase().includes(input.toLowerCase())
-                  }
+                  treeCheckable
+                  showSearch
+                  allowClear
+                  treeNodeFilterProp="title"
                   maxTagCount="responsive"
+                  showCheckedStrategy={TreeSelect.SHOW_CHILD}
+                  treeExpandAction="click"
+                  placeholder="Select Allowed Categories"
                 />
               </Form.Item>
+            </Col>
+            <Col span={24}>
+              {data.categories?.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <b>Selected:</b> {data.categories.length} categories
+                </div>
+              )}
             </Col>
           </Row>
         </Form>

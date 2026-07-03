@@ -17,14 +17,14 @@ export default class BrandsService {
 
   // POST: Create a new brand
   // data: { name, logo, description, website, sortOrder }
-  static create(data) {
+  static addBrand(data) {
     // POST {{local}}/admin/brands/add
     return axios.post(`${this.baseURL}/add`, data);
   }
 
   // PUT: Update existing brand by ID
   // data: { name, logo, description, website, sortOrder }
-  static update(id, data) {
+  static updateBrand(id, data) {
     // PUT {{local}}/admin/brands/:id
     return axios.put(`${this.baseURL}/${id}`, data);
   }
