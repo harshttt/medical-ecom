@@ -108,7 +108,7 @@ const routes = [
     title: "Vendor Product Management",
     icon: CalendarOutlined,
     url: "/product-management-vendor",
-    roles: [roles.VENDOR, roles.SUPER_ADMIN],
+    roles: [roles.VENDOR],
     children: [
       {
         title: "Product Management",

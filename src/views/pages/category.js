@@ -88,19 +88,19 @@ export default function Category({ parentId }) {
         />
       ),
     },
-    {
-      title: "Sub-Menu",
-      width: 100,
-      render: (v, row) => (
-        <Button
+    // {
+    //   title: "Sub-Menu",
+    //   width: 100,
+    //   render: (v, row) => (
+    //     <Button
          
-          size="small"
-          onClick={() => addSubNewModalRef.current.openForm(row)}
-        >
-          SubMenu
-        </Button>
-      ),
-    },
+    //       size="small"
+    //       onClick={() => addSubNewModalRef.current.openForm(row)}
+    //     >
+    //       SubMenu
+    //     </Button>
+    //   ),
+    // },
     {
       title: "Action",
       dataIndex: "_id",
