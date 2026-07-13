@@ -20,6 +20,7 @@ import {
   Typography,
   DatePicker,
   Tooltip,
+  Image,
 } from "antd";
 import {
   DeleteOutlined,
@@ -44,7 +45,6 @@ import { AntdMsg } from "../../../utils/Antd";
 import TabPane from "antd/es/tabs/TabPane";
 import dayjs from "dayjs";
 import PriceBreakDown from "../common/priceBreakDown";
-// import AstrologerCard from "./AstrologerCard";
 const { SHOW_CHILD } = Cascader;
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
@@ -55,39 +55,36 @@ export default function ProductBooking() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState([]);
   const [astrologers, setAstrologers] = useState([]);
-  const [astrologerConstants, setAstrologerConstants] = useState(
-    util.constants()?.USER?.ROLE || {}
-  );
+
   const [bookingConstants, setBookingConstants] = useState(
-    util.constants()?.ORDER || {}
+    util.constants()?.TRACKING_STATUS || {}
   );
   const [paymentConstants, setPaymentConstants] = useState(
-    util.constants()?.PAYMENT || {}
+    util.constants()?.PAYMENT_STATUS || {}
   );
   const [qData, setQData] = useState({
     page: 1,
     limit: 10,
-    order_type: bookingConstants?.TYPE?.PRODUCT,
+
   });
 
   const addNewModalRef = useRef();
-  const assignedAstrologerModalRef = useRef();
+
 
   const BOOKINGH_STATUS = [
-    { label: "PLACED", value: bookingConstants?.STATUS?.PLACED },
-    { label: "PROCESSING", value: bookingConstants?.STATUS?.PROCESSING },
-    { label: "SHIPPED", value: bookingConstants?.STATUS?.SHIPPED },
-    { label: "DELIVERED", value: bookingConstants?.STATUS?.DELIVERED },
-    { label: "CANCELLED", value: bookingConstants?.STATUS?.CANCELLED },
-    { label: "PENDING", value: bookingConstants?.STATUS?.PENDING },
+    { label: "OUT FOR DELIVERY", value: bookingConstants?.OUT_FOR_DELIVERY },
+    { label: "PROCESSING", value: bookingConstants?.PROCESSING },
+    { label: "SHIPPED", value: bookingConstants?.SHIPPED },
+    { label: "DELIVERED", value: bookingConstants?.DELIVERED },
+    { label: "CANCELLED", value: bookingConstants?.PARTIALLY_CANCELLED },
   ];
 
   const PAYMENT_STATUS = [
-    { label: "PENDING", value: paymentConstants?.STATUS?.PENDING },
-    { label: "PAID", value: paymentConstants?.STATUS?.PAID },
-    { label: "REFUNDED", value: paymentConstants?.STATUS?.REFUNDED },
-    { label: "FAILED", value: paymentConstants?.STATUS?.FAILED },
-    { label: "CANCELLED", value: paymentConstants?.STATUS?.CANCELLED },
+    { label: "PENDING", value: paymentConstants?.PENDING },
+    { label: "PAID", value: paymentConstants?.PAID },
+    { label: "REFUNDED", value: paymentConstants?.REFUNDED },
+    { label: "FAILED", value: paymentConstants?.FAILED },
+    // { label: "CANCELLED", value: paymentConstants?.PAYMENT_STATUS?.CANCELLED },
   ];
 
   const PAYMENT_METHOD = [
@@ -107,19 +104,28 @@ export default function ProductBooking() {
     },
     {
       title: "Image",
+      dataIndex: "image",
+      render: (v, row) => (
+        <Image
+          src={row?.items?.[0]?.image || "https://via.placeholder.com/150"}
+          width={50}
+          height={50}
+          style={{ objectFit: "cover" }}
+        />
+      ),
     },
     {
       title: " Product Name",
       width: 150,
       render: (v, row) => {
-        return <span>{row?.reference_id?.name || "-"}</span>;
+        return <span>{row?.items?.[0]?.name || "-"}</span>;
       },
     },
 
     {
       title: " User Name",
       render: (v, row) => {
-        return <span>{row?.user_id?.name || "-"}</span>;
+        return <span>{row?.user?.name || "-"}</span>;
       },
     },
 
@@ -129,23 +135,13 @@ export default function ProductBooking() {
       render: (v) => (v ? dayjs(v)?.format("DD MMM YYYY") : "-"),
     },
 
-    {
-      title: "Total Amount",
-      render: (v, row) => {
-        return (
-          <span>
-            ₹{row?.price_snapshot?.final_price?.toLocaleString("en-IN") || 0}
-          </span>
-        );
-      },
-    },
 
     {
       title: "Paid Amount",
       render: (v, row) => {
         return (
           <span>
-            ₹{row?.admin_price_helper?.wallet_debit_amount?.toLocaleString("en-IN") || 0}
+            ₹{row?.grandTotal?.toLocaleString("en-IN") || 0}
           </span>
         );
       },
@@ -170,8 +166,8 @@ export default function ProductBooking() {
       title: "Payment Status",
       render: (v, row) => {
         let statusLabel = "-";
-        for (let key in paymentConstants?.STATUS) {
-          if (paymentConstants?.STATUS[key] === row?.payment_status) {
+        for (let key in paymentConstants) {
+          if (paymentConstants?.[key] === row?.payment_status) {
             statusLabel = key;
             break;
           }
@@ -200,7 +196,7 @@ export default function ProductBooking() {
       width: 80,
       render: (v, row) => (
         <Space>
-          <Popconfirm
+          {/* <Popconfirm
             title="Are you sure to delete this?"
             onConfirm={() => deleteData(row._id)}
             okText="Yes"
@@ -212,7 +208,7 @@ export default function ProductBooking() {
               danger
               icon={<DeleteOutlined />}
             />
-          </Popconfirm>
+          </Popconfirm> */}
           <Button
             type="primary"
             size="small"
@@ -227,18 +223,18 @@ export default function ProductBooking() {
   function list() {
     setLoading(true);
     servicesProductBooking
-      .listProductBooking(qData)
+      .listHistory(qData)
       .then((res) => {
-        setData(res?.data?.map((v) => ({ ...v, key: v._id })));
+        setData(res?.data?.orders?.map((v) => ({ ...v, key: v._id })));
         setQData({
           ...qData,
-          limit: res?.pagination?.pageSize,
-          page: res?.pagination?.currentPage,
-          total: res?.pagination?.totalItems,
+          limit: res?.data?.pagination?.limit,
+          page: res?.data?.pagination?.page,
+          total: res?.data?.pagination?.total,
         });
       })
-      .catch(() => {
-        message.error("Failed to fetch data");
+      .catch((e) => {
+        message.error(e?.message || "Something went wrong");
       })
       .finally(() => setLoading(false));
   }
@@ -256,18 +252,7 @@ export default function ProductBooking() {
       });
   };
 
-  const activeHandler = (id) => {
-    servicesProductBooking
-      .poojaToggle(id)
-      .then((res) => {
-        message.success(res?.message);
-        list();
-        setSelected([]);
-      })
-      .catch((err) => {
-        message.error(err?.message);
-      });
-  };
+
 
   const tableColumns = columns.map((item) => ({ ...item, ellipsis: false }));
 
@@ -364,7 +349,7 @@ export default function ProductBooking() {
                       <Card size="small" bordered style={{ borderRadius: 8 }}>
                         <Text strong>Product Name</Text>
                         <br />
-                        <Text>{record?.reference_id?.name || "-"}</Text>
+                        <Text>{record?.items?.[0]?.name || "-"}</Text>
                       </Card>
                     </Col>
                     <Col span={12}>
@@ -378,14 +363,14 @@ export default function ProductBooking() {
                       <Card size="small" bordered style={{ borderRadius: 8 }}>
                         <Text strong>Quantity</Text>
                         <br />
-                        <Text>{record?.quantity || 1}</Text>
+                        <Text>{record?.items?.[0]?.quantity || ""}</Text>
                       </Card>
                     </Col>
                     <Col span={12}>
                       <Card size="small" bordered style={{ borderRadius: 8 }}>
                         <Text strong>Price</Text>
                         <br />
-                        <Text> ₹{record?.price_snapshot?.base_price || 0}</Text>
+                        <Text> ₹{record?.items?.[0]?.finalPrice || 0}</Text>
                       </Card>
                     </Col>
                     <Col span={12}>
@@ -418,17 +403,17 @@ export default function ProductBooking() {
                   <Row gutter={[16, 16]} align="middle">
                     <Col span={4}>
                       <Avatar
-                        src={record?.user_id?.profilePicture}
+                        src={record?.user?.avatar}
                         size={80}
                         style={{ border: "2px solid #d9d9d9" }}
                       />
                     </Col>
                     <Col span={20}>
                       <Title level={4} style={{ marginBottom: 0 }}>
-                        {record?.user_id?.name || "N/A"}
+                        {record?.user?.name || "N/A"}
                       </Title>
                       <Text type="secondary">
-                        {record?.user_id?.email || "N/A"}
+                        {record?.user?.email || "N/A"}
                       </Text>
                     </Col>
                   </Row>
@@ -437,7 +422,7 @@ export default function ProductBooking() {
 
               {/* 3. Payment Details */}
               <TabPane tab="Payment Details" key="3">
-                <PriceBreakDown {...{ record,paymentConstants }} />
+                <PriceBreakDown {...{ record, paymentConstants }} />
               </TabPane>
 
               {/* 4. Shipping Details */}
@@ -451,33 +436,33 @@ export default function ProductBooking() {
                     <Col span={12}>
                       <p>
                         <strong>Name:</strong>{" "}
-                        {record?.shipping_address?.name || "N/A"}
+                        {record?.shippingAddress?.fullName || "N/A"}
                       </p>
                     </Col>
                     <Col span={12}>
                       <p>
                         <strong>Phone:</strong>{" "}
-                        {record?.shipping_address?.phone || "N/A"}
+                        {record?.shippingAddress?.phone || "N/A"}
                       </p>
                     </Col>
                     <Col span={24}>
                       <p>
                         <strong>Address:</strong>
-                        {`${record?.shipping_address?.line1 || ""}, ${record?.shipping_address?.line2 || ""
+                        {`${record?.shippingAddress?.line1 || ""}, ${record?.shippingAddress?.line2 || ""
                           }`}
                       </p>
                     </Col>
                     <Col span={24}>
                       <p>
                         <strong>City/State/Pincode:</strong>
-                        {`${record?.shipping_address?.city || ""}, ${record?.shipping_address?.state || ""
-                          }, ${record?.shipping_address?.pincode || ""}`}
+                        {`${record?.shippingAddress?.city || ""}, ${record?.shippingAddress?.state || ""
+                          }, ${record?.shippingAddress?.pincode || ""}`}
                       </p>
                     </Col>
                     <Col span={12}>
                       <p>
                         <strong>Country:</strong>{" "}
-                        {record?.shipping_address?.country || "N/A"}
+                        {record?.shippingAddress?.country || "N/A"}
                       </p>
                     </Col>
                   </Row>
@@ -514,10 +499,10 @@ export default function ProductBooking() {
         ref={addNewModalRef}
         {...{ list, bookingConstants, BOOKINGH_STATUS, PAYMENT_STATUS }}
       />
-      <AsignAstrologerForm
+      {/* <AsignAstrologerForm
         ref={assignedAstrologerModalRef}
         {...{ list, astrologers }}
-      />
+      /> */}
     </Card>
   );
 }
@@ -623,9 +608,7 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
         dt
           ? {
             _id: dt?._id,
-            tracking_status: dt?.tracking_status,
-            payment_status: dt?.payment_status,
-            remarks: dt?.remarks,
+            status: dt?.status,
           }
           : {}
       );
@@ -652,7 +635,7 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
   const saveEdit = () => {
     setAjxRequesting(true);
     servicesProductBooking
-      .updateProductBooking(data._id, data)
+      .updateProductBooking(data?._id, data)
       .then((res) => {
         AntdMsg(res.message);
         list();
@@ -682,7 +665,7 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
       onCancel={() => setOpen(false)}
       destroyOnClose
       maskClosable={false}
-      width={800}
+      width={500}
       footer={[
         <Button key="cancel" onClick={() => setOpen(false)}>
           Cancel
@@ -697,18 +680,18 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
           <Row gutter={20} style={{ marginTop: 20 }}>
             {/* Existing fields here */}
 
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item label="Tracking Status">
                 <Select
-                  value={data?.tracking_status}
-                  onChange={(value) => handleChange({ tracking_status: value })}
+                  value={data?.status}
+                  onChange={(value) => handleChange({ status: value })}
                   placeholder="Select Status"
                   options={BOOKINGH_STATUS || []}
                 ></Select>
               </Form.Item>
             </Col>
 
-            <Col span={12}>
+            {/* <Col span={12}>
               <Form.Item label="Payment Status">
                 <Select
                   value={data?.payment_status}
@@ -717,9 +700,9 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
                   options={PAYMENT_STATUS || []}
                 ></Select>
               </Form.Item>
-            </Col>
+            </Col> */}
 
-            <Col span={24}>
+            {/* <Col span={24}>
               <Form.Item label="Admin Remarks">
                 <Input.TextArea
                   value={data?.remarks}
@@ -728,7 +711,7 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
                   rows={3}
                 />
               </Form.Item>
-            </Col>
+            </Col> */}
           </Row>
         </Form>
       </Spin>
@@ -736,62 +719,3 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
   );
 });
 
-const AsignAstrologerForm = forwardRef(({ list, astrologers }, ref) => {
-  const [open, setOpen] = useState(false);
-  const [asignData, setAsignData] = useState({});
-  const [ajxRequesting, setAjxRequesting] = useState(false);
-
-  useImperativeHandle(ref, () => ({
-    openForm(dt) {
-      setOpen(true);
-      setAsignData(
-        dt
-          ? { booking_id: dt?._id, astrologer_user_id: dt?.astrologer?._id }
-          : {}
-      );
-    },
-  }));
-
-  const saveAdd = () => {
-    setAjxRequesting(true);
-    servicesProductBooking
-      .asignAstrologer(asignData)
-      .then((res) => {
-        AntdMsg(res.message);
-        list();
-        setOpen(false);
-      })
-      .catch((err) => {
-        AntdMsg(err.message, "error");
-      })
-      .finally(() => setAjxRequesting(false));
-  };
-
-  const save = () => {
-    saveAdd();
-  };
-
-  return (
-    <Modal
-      title={"Astrologers"}
-      style={{ top: 20 }}
-      open={open}
-      onOk={save}
-      okButtonProps={{ disabled: ajxRequesting }}
-      onCancel={() => setOpen(false)}
-      destroyOnClose
-      maskClosable={false}
-      width={1200}
-      footer={[
-        <Button key="cancel" onClick={() => setOpen(false)}>
-          Cancel
-        </Button>,
-        <Button key="save" type="primary" onClick={save}>
-          Save
-        </Button>,
-      ]}
-    >
-      {/* <AstrologerCard {...{ asignData, setAsignData }} /> */}
-    </Modal>
-  );
-});

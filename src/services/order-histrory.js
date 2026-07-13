@@ -9,4 +9,9 @@ export default class service {
     });
   }
 
+   static updateProductBooking(id, data) {
+    console.log("updateProductBooking", id, data);
+    return axios.put(`${this.baseURL}admin/manage/status/${id}`, data);
+  }
+
 }

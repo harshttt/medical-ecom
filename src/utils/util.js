@@ -25,10 +25,6 @@ class util {
     // 👇 current logged-in role (number like 1,2,3,4)
     // console.log("commonObj Type:", commonObj.userType);
     const currentRole = Number(commonObj.userType) || roles.ADMIN;
-    console.log("Current Role:", currentRole);
-    console.log("Allowed Roles:", allowedRoles);
-    console.log("All Roles:", roles);
-
     if (!allowedRoles || allowedRoles.length === 0) return true;
 
     return allowedRoles.includes(currentRole);

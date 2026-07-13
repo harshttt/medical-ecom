@@ -15,6 +15,8 @@ import Application from '../pages/applications'
 import Services from "../pages/services";
 import ContactPage from "../pages/contactus";
 import Coupons from "../pages/coupons"
+import VendorProduct from "../pages/Vendor-Product-Management/vendor-product";
+import VendorProductBooking from "../pages/vendor-order-management/vendorOrderHistory";
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
@@ -82,14 +84,14 @@ const routes = [
     title: "Product Management",
     icon: CalendarOutlined,
     url: "/product-management",
-    roles: [roles.VENDOR, roles.SUPER_ADMIN],
+    roles: [roles.SUPER_ADMIN],
     children: [
       {
         title: "Product Management",
         icon: InsertRowRightOutlined,
         url: "/",
         component: ProductManagement,
-        roles: [roles.VENDOR, roles.SUPER_ADMIN],
+        roles: [ roles.SUPER_ADMIN],
       },
        {
         title: "Coupons Management",
@@ -98,6 +100,24 @@ const routes = [
         component: Coupons,
         roles: [roles.SUPER_ADMIN],
       },
+    ],
+  },
+
+
+   {
+    title: "Vendor Product Management",
+    icon: CalendarOutlined,
+    url: "/product-management-vendor",
+    roles: [roles.VENDOR, roles.SUPER_ADMIN],
+    children: [
+      {
+        title: "Product Management",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        component: VendorProduct,
+        roles: [roles.VENDOR],
+      },
+      
     ],
   },
  
@@ -113,6 +133,22 @@ const routes = [
         url: "/",
         component: OrderHistory,
         roles: [roles.SUPER_ADMIN],
+      },
+    ],
+  },
+
+   {
+    title: "Order History",
+    icon: CalendarOutlined,
+    url: "/order-history-vendor",
+    roles: [roles.VENDOR],
+    children: [
+      {
+        title: "Order History",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        component: VendorProductBooking,
+        roles: [roles.VENDOR],
       },
     ],
   },
@@ -137,14 +173,14 @@ const routes = [
     title: "Applications",
     icon: CalendarOutlined,
     url: "/applications",
-    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+    roles: [roles.SUPER_ADMIN],
     children: [
       {
         title: "Applications",
         icon: InsertRowRightOutlined,
         url: "/",
         component: Application,
-        roles: [roles.SUPER_ADMIN, roles.VENDOR],
+        roles: [roles.SUPER_ADMIN],
       },
     ],
   },
