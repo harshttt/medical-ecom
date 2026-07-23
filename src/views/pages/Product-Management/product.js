@@ -545,12 +545,12 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <Form.Item
                 label="Upload Thumbnail Image url"
                 required
-              // extra={
-              //   <span style={{ fontSize: "12px", color: "#888" }}>
-              //     Recommended:size 400×242px (max 5 MB) for good design
-              //     standards.
-              //   </span>
-              // }
+              extra={
+                <span style={{ fontSize: "12px", color: "#888" }}>
+                  Recommended:size (max 1 MB) for good design
+                  standards.
+                </span>
+              }
               >
                 <UploadImage
                   value={
@@ -560,6 +560,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                   // requiredWidth={400}
                   // requiredHeight={242}
                   onChange={(v) =>
+                    
                     handleChange({
                       thumbnail: v?.[0]?.url || "", // store only first file's URL
                     })

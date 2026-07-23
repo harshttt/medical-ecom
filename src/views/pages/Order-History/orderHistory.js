@@ -96,129 +96,103 @@ export default function ProductBooking() {
   ];
 
   const columns = [
-    {
-      title: "S.No",
-      dataIndex: "sno",
-      width: 50,
-      render: (text, record, index) => index + 1,
+  {
+    title: "S.No",
+    dataIndex: "sno",
+    width: 50,
+    render: (text, record, index) => index + 1,
+  },
+  {
+    title: "Image",
+    dataIndex: "image",
+    render: (v, row) => (
+      <Image
+        src={row?.items?.[0]?.image || "https://via.placeholder.com/150"}
+        width={50}
+        height={50}
+        style={{ objectFit: "cover" }}
+      />
+    ),
+  },
+  {
+    title: "Product Name",
+    width: 150,
+    render: (v, row) => <span>{row?.items?.[0]?.name || "-"}</span>,
+  },
+  {
+    title: "User Name",
+    render: (v, row) => <span>{row?.user?.name || "-"}</span>,
+  },
+  {
+    title: "Order Date",
+    dataIndex: "createdAt",
+    render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
+  },
+  {
+    title: "Paid Amount",
+    render: (v, row) => <span>₹{row?.grandTotal?.toLocaleString("en-IN") || 0}</span>,
+  },
+
+  {
+    title: "Tracking Status",
+    render: (_, row) => {
+      const statusValue = row?.overallTrackingStatus;
+      if (!statusValue) return <Tag color="default">-</Tag>;
+
+      // Find label from BOOKINGH_STATUS
+      const statusObj = BOOKINGH_STATUS.find(s => s.value === statusValue);
+      const label = statusObj?.label || "UNKNOWN";
+
+      const colorMap = {
+        1: "blue",      
+        2: "orange",    
+        3: "green",     
+        4: "red",       
+      };
+
+      return <Tag color={colorMap[statusValue] || "default"}>{label}</Tag>;
     },
-    {
-      title: "Image",
-      dataIndex: "image",
-      render: (v, row) => (
-        <Image
-          src={row?.items?.[0]?.image || "https://via.placeholder.com/150"}
-          width={50}
-          height={50}
-          style={{ objectFit: "cover" }}
+  },
+
+  {
+    title: "Payment Status",
+    render: (_, row) => {
+      const paymentStatus = row?.payment?.status ?? row?.isPaid ? 2 : 1; // fallback logic
+      const statusObj = PAYMENT_STATUS.find(s => s.value === paymentStatus);
+      const label = statusObj?.label || (row?.isPaid ? "PAID" : "PENDING");
+
+      const color = row?.isPaid || paymentStatus === 2 ? "green" : "orange";
+      return <Tag color={color}>{label}</Tag>;
+    },
+  },
+
+  {
+    title: "Payment Method",
+    render: (_, row) => {
+      const methodValue = row?.payment?.method || row?.paymentMethod;
+      if (!methodValue) return <Tag color="default">COD / Not Set</Tag>;
+
+      const methodObj = PAYMENT_METHOD.find(m => m.value === methodValue);
+      return <Tag>{methodObj?.label || methodValue}</Tag>;
+    },
+  },
+
+  {
+    title: "Action",
+    dataIndex: "_id",
+    width: 80,
+    render: (v, row) => (
+      <Space>
+        <Button
+          type="primary"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={() => addNewModalRef.current.openForm(row)}
         />
-      ),
-    },
-    {
-      title: " Product Name",
-      width: 150,
-      render: (v, row) => {
-        return <span>{row?.items?.[0]?.name || "-"}</span>;
-      },
-    },
-
-    {
-      title: " User Name",
-      render: (v, row) => {
-        return <span>{row?.user?.name || "-"}</span>;
-      },
-    },
-
-    {
-      title: "Order Date",
-      dataIndex: "createdAt",
-      render: (v) => (v ? dayjs(v)?.format("DD MMM YYYY") : "-"),
-    },
-
-
-    {
-      title: "Paid Amount",
-      render: (v, row) => {
-        return (
-          <span>
-            ₹{row?.grandTotal?.toLocaleString("en-IN") || 0}
-          </span>
-        );
-      },
-    },
-
-
-    {
-      title: "Booking Status",
-      render: (v, row) => {
-        let statusLabel = "-";
-        for (let key in bookingConstants?.STATUS) {
-          if (bookingConstants?.STATUS[key] === row?.tracking_status) {
-            statusLabel = key;
-            break;
-          }
-        }
-        return <Tag>{statusLabel || "-"}</Tag>;
-      },
-    },
-
-    {
-      title: "Payment Status",
-      render: (v, row) => {
-        let statusLabel = "-";
-        for (let key in paymentConstants) {
-          if (paymentConstants?.[key] === row?.payment_status) {
-            statusLabel = key;
-            break;
-          }
-        }
-        return <Tag>{statusLabel || "-"}</Tag>;
-      },
-    },
-
-    {
-      title: "Payment Method",
-      render: (v, row) => {
-        let statusLabel = "-";
-        for (let key in paymentConstants?.METHOD) {
-          if (paymentConstants?.METHOD[key] === row?.payment_method) {
-            statusLabel = key;
-            break;
-          }
-        }
-        return <Tag>{statusLabel || "-"}</Tag>;
-      },
-    },
-
-    {
-      title: "Action",
-      dataIndex: "_id",
-      width: 80,
-      render: (v, row) => (
-        <Space>
-          {/* <Popconfirm
-            title="Are you sure to delete this?"
-            onConfirm={() => deleteData(row._id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="primary"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-            />
-          </Popconfirm> */}
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => addNewModalRef.current.openForm(row)}
-          />
-        </Space>
-      ),
-    },
-  ];
+      </Space>
+    ),
+  },
+];
 
   function list() {
     setLoading(true);
@@ -316,15 +290,6 @@ export default function ProductBooking() {
               </Popconfirm>
             )}
           </Col>
-          {/* <Col>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => addNewModalRef.current.openForm()}
-            >
-              Add New
-            </Button>
-          </Col> */}
         </Row>
       }
     >
@@ -420,12 +385,10 @@ export default function ProductBooking() {
                 </Card>
               </TabPane>
 
-              {/* 3. Payment Details */}
               <TabPane tab="Payment Details" key="3">
                 <PriceBreakDown {...{ record, paymentConstants }} />
               </TabPane>
 
-              {/* 4. Shipping Details */}
               <TabPane tab="Shipping Address" key="4">
                 <Card
                   title="Shipping Address"
@@ -469,7 +432,6 @@ export default function ProductBooking() {
                 </Card>
               </TabPane>
 
-              {/* 5. Admin Notes */}
               <TabPane tab="Admin Feedback" key="5">
                 <Card
                   title="Additional Info"
@@ -517,7 +479,7 @@ function Search({
 }) {
   return (
     <Form onSubmitCapture={() => {
-      qData.page = 1; // Reset page on search // Reset page on search
+      qData.page = 1; 
       list();
     }}>
       <Row gutter={[12, 12]}>
@@ -530,7 +492,6 @@ function Search({
           />
         </Col>
 
-        {/* Payment Status Filter */}
         <Col span={6}>
           <Select
             placeholder="Filter by Booking Status"
@@ -564,7 +525,6 @@ function Search({
           ></Select>
         </Col>
 
-        {/* 📅 Date Range Filter */}
         <Col span={6}>
           <RangePicker
             style={{ width: "100%" }}
@@ -585,7 +545,6 @@ function Search({
           />
         </Col>
 
-        {/* Search Button */}
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -596,7 +555,7 @@ function Search({
   );
 }
 
-const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
+const AddForm = forwardRef(({ list, BOOKINGH_STATUS }, ref) => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({});
   const [ajxRequesting, setAjxRequesting] = useState(false);
@@ -604,115 +563,48 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS, PAYMENT_STATUS }, ref) => {
   useImperativeHandle(ref, () => ({
     openForm(dt) {
       setOpen(true);
-      setData(
-        dt
-          ? {
-            _id: dt?._id,
-            status: dt?.status,
-          }
-          : {}
-      );
+      setData({
+        _id: dt?._id,
+        status: dt?.overallTrackingStatus || dt?.status || 1,   // ← Fixed
+      });
     },
   }));
 
-  const handleChange = (value) => setData((prev) => ({ ...prev, ...value }));
+  const handleChange = (changed) => setData(prev => ({ ...prev, ...changed }));
 
-  // const saveAdd = () => {
-  //   setAjxRequesting(true);
-  //   servicesProductBooking
-  //     .addPooja(data)
-  //     .then((res) => {
-  //       AntdMsg(res.message);
-  //       list();
-  //       setOpen(false);
-  //     })
-  //     .catch((err) => {
-  //       AntdMsg(err.message, "error");
-  //     })
-  //     .finally(() => setAjxRequesting(false));
-  // };
-
-  const saveEdit = () => {
+  const save = () => {
     setAjxRequesting(true);
     servicesProductBooking
-      .updateProductBooking(data?._id, data)
+      .updateProductBooking(data._id, { status: data.status })
       .then((res) => {
-        AntdMsg(res.message);
+        AntdMsg(res.message || "Updated successfully");
         list();
         setOpen(false);
       })
-      .catch((err) => {
-        AntdMsg(err.message, "error");
-      })
+      .catch((err) => AntdMsg(err?.message || "Failed", "error"))
       .finally(() => setAjxRequesting(false));
-  };
-
-  const save = () => {
-    if (data._id) {
-      saveEdit();
-    } else {
-      // saveAdd();
-    }
   };
 
   return (
     <Modal
-      title={data._id ? "Edit Product Booking" : "Add Product Booking"}
-      style={{ top: 20 }}
+      title="Edit Product Booking"
       open={open}
-      onOk={save}
-      okButtonProps={{ disabled: ajxRequesting }}
       onCancel={() => setOpen(false)}
+      onOk={save}
+      okButtonProps={{ loading: ajxRequesting }}
       destroyOnClose
-      maskClosable={false}
-      width={500}
-      footer={[
-        <Button key="cancel" onClick={() => setOpen(false)}>
-          Cancel
-        </Button>,
-        <Button key="save" type="primary" onClick={save}>
-          Save
-        </Button>,
-      ]}
+      width={480}
     >
       <Spin spinning={ajxRequesting}>
         <Form layout="vertical">
-          <Row gutter={20} style={{ marginTop: 20 }}>
-            {/* Existing fields here */}
-
-            <Col span={24}>
-              <Form.Item label="Tracking Status">
-                <Select
-                  value={data?.status}
-                  onChange={(value) => handleChange({ status: value })}
-                  placeholder="Select Status"
-                  options={BOOKINGH_STATUS || []}
-                ></Select>
-              </Form.Item>
-            </Col>
-
-            {/* <Col span={12}>
-              <Form.Item label="Payment Status">
-                <Select
-                  value={data?.payment_status}
-                  onChange={(value) => handleChange({ payment_status: value })}
-                  placeholder="Select Status"
-                  options={PAYMENT_STATUS || []}
-                ></Select>
-              </Form.Item>
-            </Col> */}
-
-            {/* <Col span={24}>
-              <Form.Item label="Admin Remarks">
-                <Input.TextArea
-                  value={data?.remarks}
-                  onChange={(e) => handleChange({ remarks: e.target.value })}
-                  placeholder="Add your remarks"
-                  rows={3}
-                />
-              </Form.Item>
-            </Col> */}
-          </Row>
+          <Form.Item label="Tracking Status">
+            <Select
+              value={data.status}
+              onChange={(val) => handleChange({ status: val })}
+              options={BOOKINGH_STATUS}
+              placeholder="Select status"
+            />
+          </Form.Item>
         </Form>
       </Spin>
     </Modal>

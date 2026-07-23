@@ -50,13 +50,13 @@ export default function Category({ parentId }) {
       width: 40,
       render: (v, row, i) => <b>{i + 1}</b>,
     },
-    {
-      title: "Image",
-      dataIndex: "image_url",
-      width: 100,
-      render: (v) =>
-        v ? <Image src={v} height={60} style={{ objectFit: "cover" }} /> : "-",
-    },
+    // {
+    //   title: "Image",
+    //   dataIndex: "image_url",
+    //   width: 100,
+    //   render: (v) =>
+    //     v ? <Image src={v} height={60} style={{ objectFit: "cover" }} /> : "-",
+    // },
     {
       title: "Date",
       dataIndex: "createdAt",
