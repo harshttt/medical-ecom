@@ -226,8 +226,6 @@ export default function ProductBooking() {
       });
   };
 
-
-
   const tableColumns = columns.map((item) => ({ ...item, ellipsis: false }));
 
   tableColumns[0].fixed = true;
@@ -514,7 +512,7 @@ function Search({
           ></Select>
         </Col>
 
-        <Col span={6}>
+        {/* <Col span={6}>
           <Select
             placeholder="Filter by Payment Method"
             value={qData?.payment_method || undefined}
@@ -523,7 +521,7 @@ function Search({
             allowClear
             options={PAYMENT_METHOD || []}
           ></Select>
-        </Col>
+        </Col> */}
 
         <Col span={6}>
           <RangePicker

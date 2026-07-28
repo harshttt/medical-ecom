@@ -257,8 +257,8 @@ function Search({
         <Col xs={24} sm={12} md={6} lg={4}>
           <Select
             placeholder="Filter by Status"
-            value={qData?.active ?? undefined} // nullish coalescing
-            onChange={(value) => setQData({ ...qData, active: value })}
+            value={qData?.isActive ?? undefined} // nullish coalescing
+            onChange={(value) => setQData({ ...qData, isActive: value })}
             style={{ width: "100%" }}
             allowClear
             options={[

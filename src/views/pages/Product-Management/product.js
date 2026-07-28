@@ -106,7 +106,7 @@ export default function Product() {
       title: "Final Price",
       dataIndex: "finalPrice",
       render: (v, row) => (
-        <span> ₹{ v || "-"}</span>
+        <span> ₹{v || "-"}</span>
       ),
     },
 
@@ -333,6 +333,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 
   const saveAdd = () => {
     setAjxRequesting(true);
+
     servicesProduct
       .addProduct(data)
       .then((res) => {
@@ -341,7 +342,15 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err?.error, "error");
+        AntdMsg(
+          err?.message ||
+          err?.error ||
+          err?.response?.data?.message ||
+          "Something went wrong",
+          "error"
+        );
+
+        console.error(err);
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -356,7 +365,15 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err.error, "error");
+        AntdMsg(
+          err?.message ||
+          err?.error ||
+          err?.response?.data?.message ||
+          "Something went wrong",
+          "error"
+        );
+
+        console.error(err);
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -470,11 +487,16 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <> */}
             <Col span={12}>
               <Form.Item label="SKU" required>
-                <Input
-                  value={data?.sku}
-                  onChange={(e) => handleChange({ sku: e.target.value })}
-                  placeholder="WMOUSE123"
-                />
+                <Col span={12}>
+                  <Form.Item label="SKU" required>
+                    <Input
+                      value={data?.sku}
+                      onChange={(e) => handleChange({ sku: e.target.value })}
+                      placeholder="WMOUSE123"
+                      disabled={!!data?._id}
+                    />
+                  </Form.Item>
+                </Col>
               </Form.Item>
             </Col>
 
@@ -545,12 +567,12 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <Form.Item
                 label="Upload Thumbnail Image url"
                 required
-              extra={
-                <span style={{ fontSize: "12px", color: "#888" }}>
-                  Recommended:size (max 1 MB) for good design
-                  standards.
-                </span>
-              }
+                extra={
+                  <span style={{ fontSize: "12px", color: "#888" }}>
+                    Recommended:size (max 1 MB) for good design
+                    standards.
+                  </span>
+                }
               >
                 <UploadImage
                   value={
@@ -560,7 +582,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                   // requiredWidth={400}
                   // requiredHeight={242}
                   onChange={(v) =>
-                    
+
                     handleChange({
                       thumbnail: v?.[0]?.url || "", // store only first file's URL
                     })

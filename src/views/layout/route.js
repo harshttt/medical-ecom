@@ -17,12 +17,28 @@ import ContactPage from "../pages/contactus";
 import Coupons from "../pages/coupons"
 import VendorProduct from "../pages/Vendor-Product-Management/vendor-product";
 import VendorProductBooking from "../pages/vendor-order-management/vendorOrderHistory";
+import Dashboard from '../pages/Dashboard'
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
 // console.log("Available roles from constants:", roles);
 
 const routes = [
+   {
+    title: "Dashboard",
+    icon: CalendarOutlined,
+    url: "/dashboard",
+    roles: [roles.SUPER_ADMIN], 
+    children: [
+      {
+        title: "Dashboard",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        roles: [roles.SUPER_ADMIN], 
+        component: Dashboard,
+      },
+    ],
+  },
   {
     title: "User Management",
     icon: CalendarOutlined,
