@@ -12,17 +12,14 @@ export default class service {
     return axios.post("/vendor/product/add", data);
   }
 
-  // ✅ Fixed
   static updateProduct(id, data) {
     return axios.put(`/admin/product/${id}`, data);
   }
 
-  // ✅ Fixed
   static delete(id) {
     return axios.delete(`/admin/product/${id}`);
   }
 
-  // ✅ Fixed
   static toggle(id) {
     return axios.put(`/admin/product/${id}/status`);
   }
