@@ -44,6 +44,7 @@ export default function Auction() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [qData, setQData] = useState({ page: 1, limit: 10, search: "" });
+  const [cancelModal, setCancelModal] = useState({ open: false, id: null, reason: "" });
 
   const addNewModalRef = useRef();
   const viewBidsModalRef = useRef();
@@ -153,31 +154,25 @@ export default function Auction() {
           )}
 
           {["DRAFT", "UPCOMING", "LIVE"].includes(row.effectiveStatus) && (
-            <Popconfirm
-              title="Cancel this auction?"
-              onConfirm={() => cancelAuction(row._id)}
-              okText="Yes"
-              cancelText="No"
+            <Button
+              type="primary"
+              size="small"
+              danger
+              icon={<CloseCircleOutlined />}
+              onClick={() => openCancelModal(row._id)}
             >
-              <Button
-                type="primary"
-                size="small"
-                danger
-                icon={<CloseCircleOutlined />}
-              >
-                Cancel
-              </Button>
-            </Popconfirm>
+              Cancel
+            </Button>
           )}
 
-          <Popconfirm
+          {/* <Popconfirm
             title="Delete this auction?"
             onConfirm={() => deleteData(row._id)}
             okText="Yes"
             cancelText="No"
           >
             <Button type="primary" size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          </Popconfirm> */}
         </Space>
       ),
     },
@@ -214,7 +209,7 @@ export default function Auction() {
 
   const publishAuction = (id) => {
     serviceAuction
-      .publish(id)
+      .updateAuction(id, { status: "PUBLISHED" })
       .then(() => {
         message.success("Auction published successfully");
         list();
@@ -222,11 +217,20 @@ export default function Auction() {
       .catch((err) => message.error(err?.message || "Publish failed"));
   };
 
-  const cancelAuction = (id) => {
+  const openCancelModal = (id) => {
+    setCancelModal({ open: true, id, reason: "" });
+  };
+
+  const handleCancelAuction = () => {
+    if (!cancelModal.reason.trim()) {
+      return message.error("Please enter a cancel reason");
+    }
+
     serviceAuction
-      .cancel(id)
+      .cancel(cancelModal.id, { reason: cancelModal.reason.trim() })
       .then(() => {
         message.success("Auction cancelled successfully");
+        setCancelModal({ open: false, id: null, reason: "" });
         list();
       })
       .catch((err) => message.error(err?.message || "Cancel failed"));
@@ -276,6 +280,30 @@ export default function Auction() {
 
       <AddForm ref={addNewModalRef} list={list} />
       <ViewBidsModal ref={viewBidsModalRef} />
+
+      {/* Cancel Auction Modal */}
+      <Modal
+        title="Cancel Auction"
+        open={cancelModal.open}
+        onCancel={() => setCancelModal({ open: false, id: null, reason: "" })}
+        onOk={handleCancelAuction}
+        okText="Cancel Auction"
+        okButtonProps={{ danger: true }}
+        destroyOnClose
+      >
+        <Form layout="vertical">
+          <Form.Item label="Reason" required>
+            <Input.TextArea
+              rows={3}
+              placeholder="Enter reason for cancellation"
+              value={cancelModal.reason}
+              onChange={(e) =>
+                setCancelModal((prev) => ({ ...prev, reason: e.target.value }))
+              }
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 }
@@ -314,10 +342,26 @@ const AddForm = forwardRef(({ list }, ref) => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({});
   const [ajxRequesting, setAjxRequesting] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  const fetchProducts = () => {
+    setProductsLoading(true);
+    serviceAuction
+      .listProduct({ page: 1, limit: 1000 })
+      .then((res) => {
+        const list = res?.data?.products || res?.data || [];
+        setProducts(Array.isArray(list) ? list : []);
+      })
+      .catch(() => message.error("Failed to load products"))
+      .finally(() => setProductsLoading(false));
+  };
 
   useImperativeHandle(ref, () => ({
     openForm(dt) {
       setOpen(true);
+      fetchProducts();
+
       if (dt) {
         setData({
           ...dt,
@@ -327,7 +371,7 @@ const AddForm = forwardRef(({ list }, ref) => {
         });
       } else {
         setData({
-          productId: "",
+          productId: undefined,
           startingPrice: null,
           reservePrice: null,
           bidIncrement: null,
@@ -341,9 +385,8 @@ const AddForm = forwardRef(({ list }, ref) => {
   const handleChange = (value) => setData((prev) => ({ ...prev, ...value }));
 
   const save = () => {
-    // basic validation
     if (!data.productId) {
-      return message.error("Product ID is required");
+      return message.error("Product is required");
     }
     if (!data.startingPrice && data.startingPrice !== 0) {
       return message.error("Starting price is required");
@@ -359,7 +402,6 @@ const AddForm = forwardRef(({ list }, ref) => {
     }
 
     setAjxRequesting(true);
-
     const payload = {
       productId: data.productId,
       startingPrice: Number(data.startingPrice),
@@ -408,16 +450,25 @@ const AddForm = forwardRef(({ list }, ref) => {
         <Form layout="vertical">
           <Row gutter={20}>
             <Col span={12}>
-              <Form.Item label="Product ID" required>
-                <Input
+              <Form.Item label="Product" required>
+                <Select
+                  showSearch
+                  placeholder="Select a product"
                   value={data.productId}
-                  onChange={(e) => handleChange({ productId: e.target.value })}
-                  placeholder="Enter Product ID"
-                  disabled={!!data._id} // usually product cannot be changed after creation
+                  onChange={(v) => handleChange({ productId: v })}
+                  loading={productsLoading}
+                  disabled={!!data._id}
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={products.map((p) => ({
+                    value: p._id,
+                    label: `${p.name || "Unnamed"} — ₹${Number(p.price || 0).toLocaleString()}`,
+                  }))}
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="Starting Price (₹)" required>
                 <InputNumber
@@ -432,7 +483,6 @@ const AddForm = forwardRef(({ list }, ref) => {
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="Reserve Price (₹)" required>
                 <InputNumber
@@ -447,7 +497,6 @@ const AddForm = forwardRef(({ list }, ref) => {
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="Bid Increment (₹)" required>
                 <InputNumber
@@ -462,7 +511,6 @@ const AddForm = forwardRef(({ list }, ref) => {
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="Start Time" required>
                 <DatePicker
@@ -474,7 +522,6 @@ const AddForm = forwardRef(({ list }, ref) => {
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="End Time" required>
                 <DatePicker
@@ -499,7 +546,6 @@ const ViewBidsModal = forwardRef((_, ref) => {
   const [auctionInfo, setAuctionInfo] = useState(null);
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -513,7 +559,7 @@ const ViewBidsModal = forwardRef((_, ref) => {
     setLoading(true);
     try {
       const res = await serviceAuction.getBids(auctionId);
-      const payload = res?.data?.data || {};
+      const payload = res?.data?.data || res?.data || {};
       setAuctionInfo({
         auctionId: payload.auctionId,
         reservePrice: payload.reservePrice,
@@ -528,17 +574,9 @@ const ViewBidsModal = forwardRef((_, ref) => {
     }
   };
 
-  const viewBidDetail = async (auctionId, bidId) => {
-    setDetailLoading(true);
-    try {
-      const res = await serviceAuction.getBidDetail(auctionId, bidId);
-      setSelectedBid(res?.data?.data || res?.data || null);
-      setDetailOpen(true);
-    } catch (err) {
-      message.error(err?.message || "Failed to load bid detail");
-    } finally {
-      setDetailLoading(false);
-    }
+  const openBidDetail = (bid) => {
+    setSelectedBid(bid);
+    setDetailOpen(true);
   };
 
   return (
@@ -572,24 +610,30 @@ const ViewBidsModal = forwardRef((_, ref) => {
 
           <Table
             dataSource={bids}
-            rowKey={(record) => record._id || record.id}
+            rowKey={(record) => record.bidId}
             pagination={{ pageSize: 10 }}
             scroll={{ x: "max-content" }}
             locale={{ emptyText: "No bids placed yet" }}
             columns={[
               {
-                title: "S.No",
-                width: 60,
-                render: (_, __, index) => index + 1,
+                title: "Rank",
+                dataIndex: "rank",
+                width: 70,
+                render: (v) => <Tag color="blue">#{v}</Tag>,
+              },
+              {
+                title: "Alias",
+                dataIndex: "alias",
+                render: (v) => v || "-",
               },
               {
                 title: "Bidder",
-                dataIndex: "userId",
-                render: (user) =>
-                  user ? (
+                dataIndex: "bidder",
+                render: (bidder) =>
+                  bidder ? (
                     <Space direction="vertical" size={0}>
-                      <span>{user.name || "-"}</span>
-                      <small style={{ color: "#888" }}>{user.email || ""}</small>
+                      <span>{bidder.name || "-"}</span>
+                      <small style={{ color: "#888" }}>{bidder.email || ""}</small>
                     </Space>
                   ) : (
                     "-"
@@ -602,8 +646,19 @@ const ViewBidsModal = forwardRef((_, ref) => {
                   v != null ? `₹${Number(v).toLocaleString()}` : "-",
               },
               {
+                title: "Meets Reserve",
+                dataIndex: "meetsReserve",
+                width: 120,
+                render: (v) =>
+                  v ? (
+                    <Tag color="green">Yes</Tag>
+                  ) : (
+                    <Tag color="red">No</Tag>
+                  ),
+              },
+              {
                 title: "Bid Time",
-                dataIndex: "createdAt",
+                dataIndex: "placedAt",
                 render: (date) =>
                   date ? dayjs(date).format("DD MMM YYYY • hh:mm A") : "-",
               },
@@ -615,10 +670,7 @@ const ViewBidsModal = forwardRef((_, ref) => {
                     size="small"
                     type="link"
                     icon={<EyeOutlined />}
-                    loading={detailLoading}
-                    onClick={() =>
-                      viewBidDetail(auctionInfo?.auctionId, row._id || row.id)
-                    }
+                    onClick={() => openBidDetail(row)}
                   >
                     Detail
                   </Button>
@@ -641,50 +693,55 @@ const ViewBidsModal = forwardRef((_, ref) => {
         width={600}
         destroyOnClose
       >
-        <Spin spinning={detailLoading}>
-          {selectedBid ? (
-            <Card size="small">
-              <Row gutter={[16, 12]}>
-                <Col span={24}>
-                  <strong>Bid ID:</strong> {selectedBid._id || selectedBid.id}
-                </Col>
-                <Col span={12}>
-                  <strong>Amount:</strong> ₹
-                  {Number(selectedBid.amount || 0).toLocaleString()}
-                </Col>
-                <Col span={12}>
-                  <strong>Created At:</strong>{" "}
-                  {selectedBid.createdAt
-                    ? dayjs(selectedBid.createdAt).format("DD MMM YYYY • hh:mm A")
-                    : "-"}
-                </Col>
-                {selectedBid.userId && (
-                  <>
-                    <Col span={24}>
-                      <strong>Bidder Name:</strong> {selectedBid.userId.name}
-                    </Col>
-                    <Col span={12}>
-                      <strong>Email:</strong> {selectedBid.userId.email || "-"}
-                    </Col>
-                    <Col span={12}>
-                      <strong>Phone:</strong> {selectedBid.userId.phone || "-"}
-                    </Col>
-                  </>
+        {selectedBid ? (
+          <Card size="small">
+            <Row gutter={[16, 12]}>
+              <Col span={12}>
+                <strong>Bid ID:</strong> {selectedBid.bidId}
+              </Col>
+              <Col span={12}>
+                <strong>Rank:</strong> #{selectedBid.rank}
+              </Col>
+              <Col span={12}>
+                <strong>Alias:</strong> {selectedBid.alias || "-"}
+              </Col>
+              <Col span={12}>
+                <strong>Amount:</strong> ₹
+                {Number(selectedBid.amount || 0).toLocaleString()}
+              </Col>
+              <Col span={12}>
+                <strong>Meets Reserve:</strong>{" "}
+                {selectedBid.meetsReserve ? (
+                  <Tag color="green">Yes</Tag>
+                ) : (
+                  <Tag color="red">No</Tag>
                 )}
-                {/* fallback – show raw data if structure is different */}
-                {!selectedBid.userId && (
+              </Col>
+              <Col span={12}>
+                <strong>Placed At:</strong>{" "}
+                {selectedBid.placedAt
+                  ? dayjs(selectedBid.placedAt).format("DD MMM YYYY • hh:mm A")
+                  : "-"}
+              </Col>
+
+              {selectedBid.bidder && (
+                <>
                   <Col span={24}>
-                    <pre style={{ fontSize: 12, background: "#f5f5f5", padding: 12 }}>
-                      {JSON.stringify(selectedBid, null, 2)}
-                    </pre>
+                    <strong>Bidder Name:</strong> {selectedBid.bidder.name}
                   </Col>
-                )}
-              </Row>
-            </Card>
-          ) : (
-            <p>No detail available</p>
-          )}
-        </Spin>
+                  <Col span={12}>
+                    <strong>Email:</strong> {selectedBid.bidder.email || "-"}
+                  </Col>
+                  <Col span={12}>
+                    <strong>Phone:</strong> {selectedBid.bidder.phone || "-"}
+                  </Col>
+                </>
+              )}
+            </Row>
+          </Card>
+        ) : (
+          <p>No detail available</p>
+        )}
       </Modal>
     </>
   );
