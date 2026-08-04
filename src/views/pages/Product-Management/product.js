@@ -485,8 +485,6 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 
             {/* {useVariants == false ? (
               <> */}
-            <Col span={12}>
-              <Form.Item label="SKU" required>
                 <Col span={12}>
                   <Form.Item label="SKU" required>
                     <Input
@@ -497,9 +495,6 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                     />
                   </Form.Item>
                 </Col>
-              </Form.Item>
-            </Col>
-
 
             <Col span={12}>
               <Form.Item label=" Price" required>
