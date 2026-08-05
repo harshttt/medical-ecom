@@ -188,9 +188,10 @@ export default function Auction() {
 
         setQData((prev) => ({
           ...prev,
-          limit: res?.data?.pagination?.limit || 10,
-          page: res?.data?.pagination?.page || 1,
-          total: res?.data?.pagination?.total || 0,
+          limit: res?.pagination?.limit ?? 10,
+          page: res?.pagination?.page ?? 1,
+          total: res?.pagination?.total ?? 0,
+          totalPages: res?.pagination?.totalPages ?? 1,
         }));
       })
       .catch((e) => message.error(e?.message || "Failed to load auctions"))

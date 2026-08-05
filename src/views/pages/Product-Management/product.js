@@ -420,22 +420,6 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               </Form.Item>
             </Col>
 
-            {/* <Col span={12}>
-              <Form.Item label="Choose Category" required>
-                <Cascader
-                  style={{ width: "100%" }}
-                  value={data?.category_id}
-                  options={category}
-                  onChange={(e) => {
-                    handleChange({ category_id: e });
-                  }}
-                  placeholder="Choose categories"
-                  maxTagCount="responsive"
-                  showCheckedStrategy={SHOW_CHILD}
-                />
-              </Form.Item>
-            </Col> */}
-
             <Col span={12}>
               <Form.Item label="Choose Category" required>
                 <Select

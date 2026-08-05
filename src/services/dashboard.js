@@ -1,11 +1,11 @@
 import axios from "../utils/axios";
 
-export default class service {
+export default class DashboardService {
   static baseURL = "admin";
 
-  static listdashboard(data) {
-    return axios.get(this.baseURL + "/dashboard/all", { params: data });
+  static getDashboard(data = {}) {
+    return axios.get(`${this.baseURL}/dashboard/summary`, {
+      params: data,
+    });
   }
-
-
 }
