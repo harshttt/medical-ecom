@@ -408,27 +408,31 @@ const AddForm = forwardRef(({ list, constants, VARIFICATION_STATUS, category }, 
                 />
               </Form.Item>
             </Col>
+            {/* Email */}
             <Col span={12}>
               <Form.Item label="Email" required>
                 <Input
-                  //   disabled={id ? true : false}
                   type="email"
-                  value={data?.email}
+                  autoComplete="off"                 // or "new-email"
+                  name="vendorEmail"                 // optional extra help
+                  value={data?.email || ""}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                 />
               </Form.Item>
             </Col>
+
+            {/* Password */}
             <Col span={12}>
               <Form.Item label="Password" required>
                 <Input
-                  //   disabled={id ? true : false}
                   type="password"
-                  value={data?.password}
+                  autoComplete="new-password"        // most reliable for password fields
+                  name="vendorPassword"
+                  value={data?.password || ""}
                   onChange={(e) => setData({ ...data, password: e.target.value })}
                 />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item label="Verification Status" >
                 <Select

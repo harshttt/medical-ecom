@@ -57,10 +57,10 @@ export default function ProductBooking() {
   const [astrologers, setAstrologers] = useState([]);
 
   const [bookingConstants, setBookingConstants] = useState(
-    util.constants()?.TRACKING_STATUS || {}
+    util.constants()?.ORDER_STATUS || {}
   );
   const [paymentConstants, setPaymentConstants] = useState(
-    util.constants()?.PAYMENT_STATUS || {}
+    util.constants()?.PAYMENT_METHOD || {}
   );
   const [qData, setQData] = useState({
     page: 1,
@@ -71,12 +71,18 @@ export default function ProductBooking() {
   const addNewModalRef = useRef();
 
 
-  const BOOKINGH_STATUS = [
-    { label: "OUT FOR DELIVERY", value: bookingConstants?.OUT_FOR_DELIVERY },
+  const BOOKING_STATUS = [
+    { label: "PENDING", value: bookingConstants?.PENDING },
+    { label: "CONFIRMED", value: bookingConstants?.CONFIRMED },
     { label: "PROCESSING", value: bookingConstants?.PROCESSING },
     { label: "SHIPPED", value: bookingConstants?.SHIPPED },
+    { label: "OUT FOR DELIVERY", value: bookingConstants?.OUT_FOR_DELIVERY },
     { label: "DELIVERED", value: bookingConstants?.DELIVERED },
-    { label: "CANCELLED", value: bookingConstants?.PARTIALLY_CANCELLED },
+    { label: "CANCELLED", value: bookingConstants?.CANCELLED },
+    { label: "RETURN REQUESTED", value: bookingConstants?.RETURN_REQUESTED },
+    { label: "RETURNED", value: bookingConstants?.RETURNED },
+    { label: "REFUND INITIATED", value: bookingConstants?.REFUND_INITIATED },
+    { label: "REFUNDED", value: bookingConstants?.REFUNDED },
   ];
 
   const PAYMENT_STATUS = [
@@ -88,111 +94,127 @@ export default function ProductBooking() {
   ];
 
   const PAYMENT_METHOD = [
-    { label: "CREDIT CARD", value: paymentConstants?.METHOD?.CREDIT_CARD },
-    { label: "DEBIT CARD", value: paymentConstants?.METHOD?.DEBIT_CARD },
-    { label: "UPI", value: paymentConstants?.METHOD?.UPI },
-    { label: "WALLET", value: paymentConstants?.METHOD?.WALLET },
-    { label: "NET_BANKING", value: paymentConstants?.METHOD?.NET_BANKING },
+    { label: "CARD", value: paymentConstants?.CARD },
+    { label: "UPI", value: paymentConstants?.UPI },
+    { label: "WALLET", value: paymentConstants?.WALLET },
+    { label: "NET_BANKING", value: paymentConstants?.NETBANKING },
+    { label: "COD", value: paymentConstants?.COD },
+
   ];
 
   const columns = [
-  {
-    title: "S.No",
-    dataIndex: "sno",
-    width: 50,
-    render: (text, record, index) => index + 1,
-  },
-  {
-    title: "Image",
-    dataIndex: "image",
-    render: (v, row) => (
-      <Image
-        src={row?.items?.[0]?.image || "https://via.placeholder.com/150"}
-        width={50}
-        height={50}
-        style={{ objectFit: "cover" }}
-      />
-    ),
-  },
-  {
-    title: "Product Name",
-    width: 150,
-    render: (v, row) => <span>{row?.items?.[0]?.name || "-"}</span>,
-  },
-  {
-    title: "User Name",
-    render: (v, row) => <span>{row?.user?.name || "-"}</span>,
-  },
-  {
-    title: "Order Date",
-    dataIndex: "createdAt",
-    render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
-  },
-  {
-    title: "Paid Amount",
-    render: (v, row) => <span>₹{row?.grandTotal?.toLocaleString("en-IN") || 0}</span>,
-  },
-
-  {
-    title: "Tracking Status",
-    render: (_, row) => {
-      const statusValue = row?.overallTrackingStatus;
-      if (!statusValue) return <Tag color="default">-</Tag>;
-
-      // Find label from BOOKINGH_STATUS
-      const statusObj = BOOKINGH_STATUS.find(s => s.value === statusValue);
-      const label = statusObj?.label || "UNKNOWN";
-
-      const colorMap = {
-        1: "blue",      
-        2: "orange",    
-        3: "green",     
-        4: "red",       
-      };
-
-      return <Tag color={colorMap[statusValue] || "default"}>{label}</Tag>;
+    {
+      title: "S.No",
+      dataIndex: "sno",
+      width: 50,
+      render: (text, record, index) => index + 1,
     },
-  },
-
-  {
-    title: "Payment Status",
-    render: (_, row) => {
-      const paymentStatus = row?.payment?.status ?? row?.isPaid ? 2 : 1; // fallback logic
-      const statusObj = PAYMENT_STATUS.find(s => s.value === paymentStatus);
-      const label = statusObj?.label || (row?.isPaid ? "PAID" : "PENDING");
-
-      const color = row?.isPaid || paymentStatus === 2 ? "green" : "orange";
-      return <Tag color={color}>{label}</Tag>;
-    },
-  },
-
-  {
-    title: "Payment Method",
-    render: (_, row) => {
-      const methodValue = row?.payment?.method || row?.paymentMethod;
-      if (!methodValue) return <Tag color="default">COD / Not Set</Tag>;
-
-      const methodObj = PAYMENT_METHOD.find(m => m.value === methodValue);
-      return <Tag>{methodObj?.label || methodValue}</Tag>;
-    },
-  },
-
-  {
-    title: "Action",
-    dataIndex: "_id",
-    width: 80,
-    render: (v, row) => (
-      <Space>
-        <Button
-          type="primary"
-          size="small"
-          icon={<EditOutlined />}
-          onClick={() => addNewModalRef.current.openForm(row)}
+    {
+      title: "Image",
+      dataIndex: "image",
+      render: (v, row) => (
+        <Image
+          src={row?.items?.[0]?.image || "https://via.placeholder.com/150"}
+          width={50}
+          height={50}
+          style={{ objectFit: "cover" }}
         />
-      </Space>
-    ),
-  },
-];
+      ),
+    },
+    {
+      title: "Product Name",
+      width: 150,
+      render: (v, row) => <span>{row?.items?.[0]?.name || "-"}</span>,
+    },
+    {
+      title: "User Name",
+      render: (v, row) => <span>{row?.user?.name || "-"}</span>,
+    },
+    {
+      title: "Order Date",
+      dataIndex: "createdAt",
+      render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
+    },
+    {
+      title: "Paid Amount",
+      render: (v, row) => <span>₹{row?.grandTotal?.toLocaleString("en-IN") || 0}</span>,
+    },
+
+    {
+      title: "Tracking Status",
+      render: (_, row) => {
+        // Get status from trackingDetails
+        const statusValue = row?.trackingDetails?.[0]?.status;
+
+        if (statusValue == null) {
+          return <Tag color="default">-</Tag>;
+        }
+
+        const statusObj = BOOKING_STATUS.find(
+          (item) => item.value === statusValue
+        );
+
+        const label = statusObj?.label || "UNKNOWN";
+
+        const colorMap = {
+          [bookingConstants?.OUT_FOR_DELIVERY]: "blue",
+          [bookingConstants?.PROCESSING]: "orange",
+          [bookingConstants?.SHIPPED]: "cyan",
+          [bookingConstants?.DELIVERED]: "green",
+          [bookingConstants?.CANCELLED]: "red",
+        };
+
+        return (
+          <Tag color={colorMap[statusValue] || "default"}>
+            {label}
+          </Tag>
+        );
+      },
+    },
+
+    {
+      title: "Payment Status",
+      render: (_, row) => {
+        const paymentStatus = row?.payment?.status ?? row?.isPaid ? 2 : 1; // fallback logic
+        const statusObj = PAYMENT_STATUS.find(s => s.value === paymentStatus);
+        const label = statusObj?.label || (row?.isPaid ? "PAID" : "PENDING");
+
+        const color = row?.isPaid || paymentStatus === 2 ? "green" : "orange";
+        return <Tag color={color}>{label}</Tag>;
+      },
+    },
+
+    {
+      title: "Payment Method",
+      render: (_, row) => {
+        const methodValue = row?.payment?.method || row?.paymentMethod;
+        if (!methodValue) return <Tag color="default">COD / Not Set</Tag>;
+
+        const methodObj = PAYMENT_METHOD.find(m => m.value === methodValue);
+        console.log("methodValue:", methodValue, typeof methodValue);
+        console.log("PAYMENT_METHOD:", PAYMENT_METHOD);
+        console.log("paymentConstants Top:", paymentConstants);
+
+        return <Tag>{methodObj?.label || methodValue}</Tag>;
+      },
+    },
+
+    {
+      title: "Action",
+      dataIndex: "_id",
+      width: 80,
+      render: (v, row) => (
+        <Space>
+          <Button
+            type="primary"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => addNewModalRef.current.openForm(row)}
+          />
+        </Space>
+      ),
+    },
+  ];
 
   function list() {
     setLoading(true);
@@ -240,7 +262,7 @@ export default function ProductBooking() {
           qData,
           setQData,
           list,
-          BOOKINGH_STATUS,
+          BOOKING_STATUS,
           PAYMENT_STATUS,
           PAYMENT_METHOD,
         }}
@@ -457,7 +479,7 @@ export default function ProductBooking() {
 
       <AddForm
         ref={addNewModalRef}
-        {...{ list, bookingConstants, BOOKINGH_STATUS, PAYMENT_STATUS }}
+        {...{ list, bookingConstants, BOOKING_STATUS, PAYMENT_STATUS }}
       />
       {/* <AsignAstrologerForm
         ref={assignedAstrologerModalRef}
@@ -471,13 +493,13 @@ function Search({
   qData,
   setQData,
   list,
-  BOOKINGH_STATUS,
+  BOOKING_STATUS,
   PAYMENT_STATUS,
   PAYMENT_METHOD,
 }) {
   return (
     <Form onSubmitCapture={() => {
-      qData.page = 1; 
+      qData.page = 1;
       list();
     }}>
       <Row gutter={[12, 12]}>
@@ -497,7 +519,7 @@ function Search({
             onChange={(value) => setQData({ ...qData, booking_status: value })}
             style={{ width: "100%" }}
             allowClear
-            options={BOOKINGH_STATUS || []}
+            options={BOOKING_STATUS || []}
           ></Select>
         </Col>
 
@@ -553,20 +575,20 @@ function Search({
   );
 }
 
-const AddForm = forwardRef(({ list, BOOKINGH_STATUS }, ref) => {
+const AddForm = forwardRef(({ list, BOOKING_STATUS }, ref) => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({});
   const [ajxRequesting, setAjxRequesting] = useState(false);
 
-  useImperativeHandle(ref, () => ({
-    openForm(dt) {
-      setOpen(true);
-      setData({
-        _id: dt?._id,
-        status: dt?.overallTrackingStatus || dt?.status || 1,   // ← Fixed
-      });
-    },
-  }));
+ useImperativeHandle(ref, () => ({
+  openForm(dt) {
+    setOpen(true);
+    setData({
+      _id: dt?._id,
+      status: dt?.trackingDetails?.[0]?.status ?? dt?.overallTrackingStatus ?? dt?.status ?? 1,
+    });
+  },
+}));
 
   const handleChange = (changed) => setData(prev => ({ ...prev, ...changed }));
 
@@ -597,9 +619,9 @@ const AddForm = forwardRef(({ list, BOOKINGH_STATUS }, ref) => {
         <Form layout="vertical">
           <Form.Item label="Tracking Status">
             <Select
-              value={data.status}
+              value={data?.status}
               onChange={(val) => handleChange({ status: val })}
-              options={BOOKINGH_STATUS}
+              options={BOOKING_STATUS}
               placeholder="Select status"
             />
           </Form.Item>

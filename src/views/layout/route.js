@@ -44,7 +44,7 @@ const routes = [
     title: "User Management",
     icon: CalendarOutlined,
     url: "/user",
-    roles: [roles.SUPER_ADMIN], // ✅ who can see module
+    roles: [roles.SUPER_ADMIN], 
     children: [
       {
         title: "User",
@@ -144,7 +144,7 @@ const routes = [
     icon: HomeOutlined,
     url: "/auction",
     component: Auction,
-    roles: [roles.SUPER_ADMIN],
+    roles: [roles.SUPER_ADMIN, roles.VENDOR],
   },
  
   {
