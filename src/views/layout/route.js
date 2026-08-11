@@ -19,6 +19,7 @@ import VendorProduct from "../pages/Vendor-Product-Management/vendor-product";
 import VendorProductBooking from "../pages/vendor-order-management/vendorOrderHistory";
 import Dashboard from '../pages/Dashboard'
 import Auction from '../pages/Auction/auction'
+import VendorAuction from "../pages/Auction/vendorAuction";
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
@@ -144,15 +145,15 @@ const routes = [
     icon: HomeOutlined,
     url: "/auction",
     component: Auction,
-    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+    roles: [roles.SUPER_ADMIN],
   },
 
    {
     title: "Auction Management",
     icon: HomeOutlined,
     url: "/auction",
-    component: Auction,
-    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+    component: VendorAuction,
+    roles: [roles.VENDOR],
   },
  
   {

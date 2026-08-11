@@ -428,12 +428,6 @@ const save = () => {
               <Form.Item
                 label="Upload Logo"
                 required
-              // extra={
-              //   <span style={{ fontSize: "12px", color: "#888" }}>
-              //     Recommended:size 400×242px (max 5 MB) for good design
-              //     standards.
-              //   </span>
-              // }
               >
                 <UploadImage
                   value={data?.logo ? [{ url: data?.logo }] : []} // wrap single value in array

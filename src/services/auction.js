@@ -2,6 +2,14 @@ import axios from "../utils/axios";
 
 export default class service {
 
+  static approve(id) {
+  return axios.post(`/admin/auction/approve/${id}`);
+}
+
+static reject(id, data) {
+  return axios.post(`/admin/auction/reject/${id}`, data); 
+}
+
   static listAuction(data) {
     return axios.get("/admin/auction/getAll", { params: data });
   }
