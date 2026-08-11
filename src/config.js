@@ -1,7 +1,8 @@
 const config = {
   env: "local",
   apiUrl: "https://api.bsconnect.store/api/",
-  //apiUrl: "http://192.168.0.58:5500/api/",
-};
+  // apiUrl: "https://nicky-unconcordant-otiosely.ngrok-free.dev/api/"
+}
+
 
 export default config;

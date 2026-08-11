@@ -1,7 +1,8 @@
+
+
 import axios from "../utils/axios";
 
 export default class service {
-  
 
   static listProduct(data) {
     return axios.get("/admin/product/getAll", { params: data });
@@ -12,21 +13,23 @@ export default class service {
   }
 
   static updateProduct(id, data) {
-    return axios.put("/admin/product/${id}", data);
+    return axios.put(`/admin/product/${id}`, data);
   }
 
   static delete(id) {
-    return axios.delete("/admin/product/${id}");
+    return axios.delete(`/admin/product/${id}`);
   }
 
-  static toggle(id) {
-    return axios.put("/admin/product/${id}/status");
-  }
+ static toggle(id, status) {
+  return axios.put(`/admin/product/${id}/status`, {
+    status,
+  });
+}
 
   static deletemany(ids) {
     const idArray = Array.isArray(ids) ? ids : [ids];
     return axios.delete("/admin/product/bulk-delete", {
-      data: { ids: idArray }, // always send array
+      data: { ids: idArray },
     });
   }
 }

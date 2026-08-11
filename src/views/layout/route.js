@@ -17,17 +17,34 @@ import ContactPage from "../pages/contactus";
 import Coupons from "../pages/coupons"
 import VendorProduct from "../pages/Vendor-Product-Management/vendor-product";
 import VendorProductBooking from "../pages/vendor-order-management/vendorOrderHistory";
+import Dashboard from '../pages/Dashboard'
+import Auction from '../pages/Auction/auction'
 
 const roles = util.constants()?.ROLES || {};
 // console.log("console1", util.constants());
 // console.log("Available roles from constants:", roles);
 
 const routes = [
+   {
+    title: "Dashboard",
+    icon: CalendarOutlined,
+    url: "/dashboard",
+    roles: [roles.SUPER_ADMIN], 
+    children: [
+      {
+        title: "Dashboard",
+        icon: InsertRowRightOutlined,
+        url: "/",
+        roles: [roles.SUPER_ADMIN], 
+        component: Dashboard,
+      },
+    ],
+  },
   {
     title: "User Management",
     icon: CalendarOutlined,
     url: "/user",
-    roles: [roles.SUPER_ADMIN], // ✅ who can see module
+    roles: [roles.SUPER_ADMIN], 
     children: [
       {
         title: "User",
@@ -62,6 +79,7 @@ const routes = [
     component: BrandManagement,
     roles: [roles.SUPER_ADMIN],
   },
+
 
   {
     title: "Vendor Management",
@@ -119,6 +137,22 @@ const routes = [
       },
       
     ],
+  },
+
+   {
+    title: "Auction Management",
+    icon: HomeOutlined,
+    url: "/auction",
+    component: Auction,
+    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+  },
+
+   {
+    title: "Auction Management",
+    icon: HomeOutlined,
+    url: "/auction",
+    component: Auction,
+    roles: [roles.SUPER_ADMIN, roles.VENDOR],
   },
  
   {

@@ -73,10 +73,12 @@ export default function VendorProduct() {
       title: "Name",
       dataIndex: "name",
     },
-
+    
     {
       title: "Category",
-      dataIndex: "categoryName",
+      dataIndex: "categoryId",
+      key: "categoryId",
+      render: (category) => category?.name || "-",
     },
 
     {
@@ -103,10 +105,10 @@ export default function VendorProduct() {
     },
 
     {
-      title: "Final Price",
-      dataIndex: "finalPrice",
+      title: "Price",
+      dataIndex: "price",
       render: (v, row) => (
-        <span> ₹{ v || "-"}</span>
+        <span> ₹{v || "-"}</span>
       ),
     },
 
@@ -423,7 +425,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <Form.Item label="Choose Category" required>
                 <Select
                   style={{ width: "100%" }}
-                  value={data?.categoryId}
+                  value={data?.categoryId?.name}
                   onChange={(value) => handleChange({ categoryId: value })}
                   placeholder="Choose category"
                   options={(category || [])?.map((cat) => ({
@@ -439,7 +441,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <Form.Item label="Choose Brand" required>
                 <Select
                   style={{ width: "100%" }}
-                  value={data?.brandId}
+                  value={data?.brandId?.name}
                   onChange={(value) => handleChange({ brandId: value })}
                   placeholder="Choose brand"
                   options={(brand || [])?.map((cat) => ({

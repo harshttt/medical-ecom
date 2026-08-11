@@ -49,8 +49,12 @@ export default function Coupon() {
   const columns = [
     { title: "S.No", width: 60, render: (_, __, index) => index + 1 },
     { title: "Code", dataIndex: "code", render: (code) => <strong>{code}</strong> },
-    { title: "Description", dataIndex: "description", ellipsis: true },
     {
+      title: "Description",
+      dataIndex: "description",
+      render: (text) =>
+        text?.length > 40 ? `${text.substring(0, 40)}...` : text,
+    }, {
       title: "Discount",
       render: (_, record) => (
         <span>

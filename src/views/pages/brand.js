@@ -324,13 +324,24 @@ const AddForm = forwardRef(({ list }, ref) => {
       .finally(() => setAjxRequesting(false));
   };
 
-  const save = () => {
-    if (data?._id) {
-      saveEdit();
-    } else {
-      saveAdd();
-    }
-  };
+const save = () => {
+  if (!data?.name?.trim()) {
+    return AntdMsg("Please enter the brand name.", "warning");
+  }
+
+  if (!data?.logo) {
+    return AntdMsg("Please upload a brand logo.", "warning");
+  }
+
+  if (data?.website && !/^https?:\/\/.+/i.test(data.website)) {
+    return AntdMsg(
+      "Please enter a valid website URL (e.g. https://example.com).",
+      "warning"
+    );
+  }
+
+  data?._id ? saveEdit() : saveAdd();
+};
 
   return (
     <Modal
@@ -416,6 +427,7 @@ const AddForm = forwardRef(({ list }, ref) => {
             <Col span={12}>
               <Form.Item
                 label="Upload Logo"
+                required
               // extra={
               //   <span style={{ fontSize: "12px", color: "#888" }}>
               //     Recommended:size 400×242px (max 5 MB) for good design

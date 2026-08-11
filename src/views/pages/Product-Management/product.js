@@ -57,7 +57,7 @@ export default function Product() {
   const [selected, setSelected] = useState([]);
   const [category, setCategory] = useState([]);
   const [brand, setBrand] = useState([]);
-  const [qData, setQData] = useState({ page: 1, limit: 10, });
+  const [qData, setQData] = useState({ page: 1, limit: 10, status: undefined });
 
 
   const addNewModalRef = useRef();
@@ -78,7 +78,6 @@ export default function Product() {
       title: "Category",
       dataIndex: "categoryName",
     },
-
     {
       title: "Thumbnail",
       dataIndex: "thumbnail",
@@ -91,7 +90,6 @@ export default function Product() {
         />
       ),
     },
-
     {
       title: "Price",
       dataIndex: "price",
@@ -106,7 +104,30 @@ export default function Product() {
       title: "Final Price",
       dataIndex: "finalPrice",
       render: (v, row) => (
-        <span> ₹{ v || "-"}</span>
+        <span> ₹{v || "-"}</span>
+      ),
+    },
+    {
+      title: "Vendor/Superadmin",
+      dataIndex: "vendorName",
+      key: "vendorName",
+      render: (vendorName) =>
+        vendorName || "Superadmin",
+    },
+
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status, row) => (
+        <Switch
+          checked={status === 2}
+          checkedChildren="Active"
+          unCheckedChildren="Inactive"
+          onChange={(checked) => {
+            activeHandler(row?._id, checked ? 2 : 5);
+          }}
+        />
       ),
     },
 
@@ -129,6 +150,7 @@ export default function Product() {
               icon={<DeleteOutlined />}
             />
           </Popconfirm>
+
           <Button
             type="primary"
             size="small"
@@ -172,16 +194,20 @@ export default function Product() {
       });
   };
 
-  const activeHandler = (id) => {
+  const activeHandler = (id, status) => {
     servicesProduct
-      .toggel(id)
+      .toggle(id, status)
       .then((res) => {
-        message.success(res?.message);
+        message.success(res?.message || "Product status updated successfully");
         list();
         setSelected([]);
       })
       .catch((err) => {
-        message.error(err?.message);
+        message.error(
+          
+          err?.message ||
+          "Failed to update product status"
+        );
       });
   };
 
@@ -212,10 +238,9 @@ export default function Product() {
   };
 
 
-
-  useEffect(() => {
-    list();
-  }, [qData.page, qData.limit]);
+useEffect(() => {
+  list();
+}, [qData.page, qData.limit, qData.status, qData.search]);
 
   useEffect(() => {
     servicesCategory.listCategory({ limit: 2000 }).then((res) => {
@@ -285,28 +310,65 @@ export default function Product() {
   );
 }
 
-function Search({
-  qData,
-  setQData,
-  list,
+function Search({ qData, setQData, list }) {
+  const handleSearch = () => {
+    setQData((prev) => ({
+      ...prev,
+      page: 1,
+    }));
+  };
 
-}) {
+  const handleStatusChange = (value) => {
+    setQData((prev) => ({
+      ...prev,
+      status: value,
+      page: 1,
+      status: undefined
+    }));
+  };
+
   return (
-    <Form onSubmitCapture={() => {
-      qData.page = 1 // Reset page on search
-      list();
-    }}>
-      <Row gutter={[12, 12]}>
-        <Col span={6}>
+    <Form
+      onSubmitCapture={(e) => {
+        e.preventDefault();
+        handleSearch();
+      }}
+    >
+      <Row gutter={[12, 12]} align="middle">
+        <Col span={8}>
           <Input
-            placeholder="Search"
-            value={qData.key}
-            onChange={(e) => setQData({ ...qData, search: e.target.value })}
+            placeholder="Search product"
+            value={qData.search}
+            onChange={(e) =>
+              setQData((prev) => ({
+                ...prev,
+                search: e.target.value,
+              }))
+            }
             allowClear
           />
         </Col>
 
-        {/* Search Button */}
+        <Col span={3}>
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Filter by Status"
+            value={qData?.status}
+            onChange={handleStatusChange}
+            allowClear
+            options={[
+              {
+                label: "Active",
+                value: 2,
+              },
+              {
+                label: "Inactive",
+                value: 5,
+              },
+            ]}
+          />
+        </Col>
+
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -333,6 +395,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 
   const saveAdd = () => {
     setAjxRequesting(true);
+
     servicesProduct
       .addProduct(data)
       .then((res) => {
@@ -341,7 +404,15 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err?.error, "error");
+        AntdMsg(
+          err?.message ||
+          err?.error ||
+          err?.response?.data?.message ||
+          "Something went wrong",
+          "error"
+        );
+
+        console.error(err);
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -356,7 +427,15 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
         setOpen(false);
       })
       .catch((err) => {
-        AntdMsg(err.error, "error");
+        AntdMsg(
+          err?.message ||
+          err?.error ||
+          err?.response?.data?.message ||
+          "Something went wrong",
+          "error"
+        );
+
+        console.error(err);
       })
       .finally(() => setAjxRequesting(false));
   };
@@ -402,22 +481,6 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                 />
               </Form.Item>
             </Col>
-
-            {/* <Col span={12}>
-              <Form.Item label="Choose Category" required>
-                <Cascader
-                  style={{ width: "100%" }}
-                  value={data?.category_id}
-                  options={category}
-                  onChange={(e) => {
-                    handleChange({ category_id: e });
-                  }}
-                  placeholder="Choose categories"
-                  maxTagCount="responsive"
-                  showCheckedStrategy={SHOW_CHILD}
-                />
-              </Form.Item>
-            </Col> */}
 
             <Col span={12}>
               <Form.Item label="Choose Category" required>
@@ -474,10 +537,10 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                   value={data?.sku}
                   onChange={(e) => handleChange({ sku: e.target.value })}
                   placeholder="WMOUSE123"
+                  disabled={!!data?._id}
                 />
               </Form.Item>
             </Col>
-
 
             <Col span={12}>
               <Form.Item label=" Price" required>
@@ -545,12 +608,12 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
               <Form.Item
                 label="Upload Thumbnail Image url"
                 required
-              // extra={
-              //   <span style={{ fontSize: "12px", color: "#888" }}>
-              //     Recommended:size 400×242px (max 5 MB) for good design
-              //     standards.
-              //   </span>
-              // }
+                extra={
+                  <span style={{ fontSize: "12px", color: "#888" }}>
+                    Recommended:size (max 1 MB) for good design
+                    standards.
+                  </span>
+                }
               >
                 <UploadImage
                   value={
@@ -560,6 +623,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                   // requiredWidth={400}
                   // requiredHeight={242}
                   onChange={(v) =>
+
                     handleChange({
                       thumbnail: v?.[0]?.url || "", // store only first file's URL
                     })

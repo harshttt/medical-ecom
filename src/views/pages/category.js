@@ -50,13 +50,13 @@ export default function Category({ parentId }) {
       width: 40,
       render: (v, row, i) => <b>{i + 1}</b>,
     },
-    {
-      title: "Image",
-      dataIndex: "image_url",
-      width: 100,
-      render: (v) =>
-        v ? <Image src={v} height={60} style={{ objectFit: "cover" }} /> : "-",
-    },
+    // {
+    //   title: "Image",
+    //   dataIndex: "image_url",
+    //   width: 100,
+    //   render: (v) =>
+    //     v ? <Image src={v} height={60} style={{ objectFit: "cover" }} /> : "-",
+    // },
     {
       title: "Date",
       dataIndex: "createdAt",
@@ -257,8 +257,8 @@ function Search({
         <Col xs={24} sm={12} md={6} lg={4}>
           <Select
             placeholder="Filter by Status"
-            value={qData?.active ?? undefined} // nullish coalescing
-            onChange={(value) => setQData({ ...qData, active: value })}
+            value={qData?.isActive ?? undefined} // nullish coalescing
+            onChange={(value) => setQData({ ...qData, isActive: value })}
             style={{ width: "100%" }}
             allowClear
             options={[
