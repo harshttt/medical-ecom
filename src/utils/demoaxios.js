@@ -4,7 +4,7 @@ import config from "../config";
 
 const axiosInstance = axios.create({
   baseURL: "https://api.bsconnect.store/"
-  // baseURL: "https://api.astrowala.ai",
+  //  baseURL: "https://nicky-unconcordant-otiosely.ngrok-free.dev/api/"
 });
 
 axiosInstance.interceptors.request.use(

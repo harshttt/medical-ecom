@@ -146,6 +146,14 @@ const routes = [
     component: Auction,
     roles: [roles.SUPER_ADMIN, roles.VENDOR],
   },
+
+   {
+    title: "Auction Management",
+    icon: HomeOutlined,
+    url: "/auction",
+    component: Auction,
+    roles: [roles.SUPER_ADMIN, roles.VENDOR],
+  },
  
   {
     title: "Order History",

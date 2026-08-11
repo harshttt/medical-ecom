@@ -20,9 +20,11 @@ export default class service {
     return axios.delete(`/admin/product/${id}`);
   }
 
-  static toggle(id) {
-    return axios.put(`/admin/product/${id}/status`);
-  }
+ static toggle(id, status) {
+  return axios.put(`/admin/product/${id}/status`, {
+    status,
+  });
+}
 
   static deletemany(ids) {
     const idArray = Array.isArray(ids) ? ids : [ids];

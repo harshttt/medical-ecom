@@ -57,7 +57,7 @@ export default function Product() {
   const [selected, setSelected] = useState([]);
   const [category, setCategory] = useState([]);
   const [brand, setBrand] = useState([]);
-  const [qData, setQData] = useState({ page: 1, limit: 10, });
+  const [qData, setQData] = useState({ page: 1, limit: 10, status: undefined });
 
 
   const addNewModalRef = useRef();
@@ -78,7 +78,6 @@ export default function Product() {
       title: "Category",
       dataIndex: "categoryName",
     },
-
     {
       title: "Thumbnail",
       dataIndex: "thumbnail",
@@ -91,7 +90,6 @@ export default function Product() {
         />
       ),
     },
-
     {
       title: "Price",
       dataIndex: "price",
@@ -107,6 +105,29 @@ export default function Product() {
       dataIndex: "finalPrice",
       render: (v, row) => (
         <span> ₹{v || "-"}</span>
+      ),
+    },
+    {
+      title: "Vendor/Superadmin",
+      dataIndex: "vendorName",
+      key: "vendorName",
+      render: (vendorName) =>
+        vendorName || "Superadmin",
+    },
+
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status, row) => (
+        <Switch
+          checked={status === 2}
+          checkedChildren="Active"
+          unCheckedChildren="Inactive"
+          onChange={(checked) => {
+            activeHandler(row?._id, checked ? 2 : 5);
+          }}
+        />
       ),
     },
 
@@ -129,6 +150,7 @@ export default function Product() {
               icon={<DeleteOutlined />}
             />
           </Popconfirm>
+
           <Button
             type="primary"
             size="small"
@@ -172,16 +194,20 @@ export default function Product() {
       });
   };
 
-  const activeHandler = (id) => {
+  const activeHandler = (id, status) => {
     servicesProduct
-      .toggel(id)
+      .toggle(id, status)
       .then((res) => {
-        message.success(res?.message);
+        message.success(res?.message || "Product status updated successfully");
         list();
         setSelected([]);
       })
       .catch((err) => {
-        message.error(err?.message);
+        message.error(
+          
+          err?.message ||
+          "Failed to update product status"
+        );
       });
   };
 
@@ -212,10 +238,9 @@ export default function Product() {
   };
 
 
-
-  useEffect(() => {
-    list();
-  }, [qData.page, qData.limit]);
+useEffect(() => {
+  list();
+}, [qData.page, qData.limit, qData.status, qData.search]);
 
   useEffect(() => {
     servicesCategory.listCategory({ limit: 2000 }).then((res) => {
@@ -285,28 +310,65 @@ export default function Product() {
   );
 }
 
-function Search({
-  qData,
-  setQData,
-  list,
+function Search({ qData, setQData, list }) {
+  const handleSearch = () => {
+    setQData((prev) => ({
+      ...prev,
+      page: 1,
+    }));
+  };
 
-}) {
+  const handleStatusChange = (value) => {
+    setQData((prev) => ({
+      ...prev,
+      status: value,
+      page: 1,
+      status: undefined
+    }));
+  };
+
   return (
-    <Form onSubmitCapture={() => {
-      qData.page = 1 // Reset page on search
-      list();
-    }}>
-      <Row gutter={[12, 12]}>
-        <Col span={6}>
+    <Form
+      onSubmitCapture={(e) => {
+        e.preventDefault();
+        handleSearch();
+      }}
+    >
+      <Row gutter={[12, 12]} align="middle">
+        <Col span={8}>
           <Input
-            placeholder="Search"
-            value={qData.key}
-            onChange={(e) => setQData({ ...qData, search: e.target.value })}
+            placeholder="Search product"
+            value={qData.search}
+            onChange={(e) =>
+              setQData((prev) => ({
+                ...prev,
+                search: e.target.value,
+              }))
+            }
             allowClear
           />
         </Col>
 
-        {/* Search Button */}
+        <Col span={3}>
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Filter by Status"
+            value={qData?.status}
+            onChange={handleStatusChange}
+            allowClear
+            options={[
+              {
+                label: "Active",
+                value: 2,
+              },
+              {
+                label: "Inactive",
+                value: 5,
+              },
+            ]}
+          />
+        </Col>
+
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -469,16 +531,16 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 
             {/* {useVariants == false ? (
               <> */}
-                <Col span={12}>
-                  <Form.Item label="SKU" required>
-                    <Input
-                      value={data?.sku}
-                      onChange={(e) => handleChange({ sku: e.target.value })}
-                      placeholder="WMOUSE123"
-                      disabled={!!data?._id}
-                    />
-                  </Form.Item>
-                </Col>
+            <Col span={12}>
+              <Form.Item label="SKU" required>
+                <Input
+                  value={data?.sku}
+                  onChange={(e) => handleChange({ sku: e.target.value })}
+                  placeholder="WMOUSE123"
+                  disabled={!!data?._id}
+                />
+              </Form.Item>
+            </Col>
 
             <Col span={12}>
               <Form.Item label=" Price" required>

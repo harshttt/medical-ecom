@@ -39,15 +39,44 @@ import { useNavigate } from "react-router-dom";
 import { AntdMsg } from "../../../utils/Antd";
 import dayjs from "dayjs";
 
+const AUCTION_STATUS_LABELS = {
+  1: "DRAFT",
+  3: "SCHEDULED",
+  4: "COMPLETED",
+  5: "CANCELLED",
+  6: "CLOSED_UNSOLD",
+  7: "PENDING_APPROVAL",
+  8: "REJECTED",
+};
+
+const AUCTION_EFFECTIVE_STATUS_LABELS = {
+  1: "SCHEDULED",
+  2: "LIVE",
+  3: "ENDED",
+};
+
+const AUCTION_STATUS_OPTIONS = Object.entries(AUCTION_STATUS_LABELS).map(
+  ([key, value]) => ({
+    value,
+    label: value
+      .toLowerCase()
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" "),
+  })
+);
+
 export default function Auction() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [qData, setQData] = useState({ page: 1, limit: 10, search: "" });
+  const [qData, setQData] = useState({ page: 1, limit: 10, search: "", status: undefined });
   const [cancelModal, setCancelModal] = useState({ open: false, id: null, reason: "" });
 
   const addNewModalRef = useRef();
   const viewBidsModalRef = useRef();
+
+
 
   const columns = [
     { title: "S.No", width: 60, render: (_, __, index) => index + 1 },
@@ -72,16 +101,6 @@ export default function Auction() {
     {
       title: "Starting Price",
       dataIndex: "startingPrice",
-      render: (v) => (v != null ? `₹${Number(v).toLocaleString()}` : "-"),
-    },
-    {
-      title: "Reserve Price",
-      dataIndex: "reservePrice",
-      render: (v) => (v != null ? `₹${Number(v).toLocaleString()}` : "-"),
-    },
-    {
-      title: "Bid Increment",
-      dataIndex: "bidIncrement",
       render: (v) => (v != null ? `₹${Number(v).toLocaleString()}` : "-"),
     },
     {
@@ -320,7 +339,7 @@ function Search({ qData, setQData, list }) {
       }}
     >
       <Row gutter={12}>
-        <Col span={8}>
+        <Col span={5}>
           <Input
             placeholder="Search by title / product"
             value={qData.search}
@@ -328,6 +347,24 @@ function Search({ qData, setQData, list }) {
             allowClear
           />
         </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Filter by status"
+            value={qData.status}
+            options={AUCTION_STATUS_OPTIONS}
+            allowClear
+            onChange={(value) =>
+              setQData((prev) => ({
+                ...prev,
+                status: value,
+                page: 1,
+              }))
+            }
+          />
+        </Col>
+
         <Col>
           <Button type="primary" htmlType="submit">
             Search
@@ -392,12 +429,12 @@ const AddForm = forwardRef(({ list }, ref) => {
     if (!data.startingPrice && data.startingPrice !== 0) {
       return message.error("Starting price is required");
     }
-    if (!data.reservePrice && data.reservePrice !== 0) {
-      return message.error("Reserve price is required");
-    }
-    if (!data.bidIncrement && data.bidIncrement !== 0) {
-      return message.error("Bid increment is required");
-    }
+    // if (!data.reservePrice && data.reservePrice !== 0) {
+    //   return message.error("Reserve price is required");
+    // }
+    // if (!data.bidIncrement && data.bidIncrement !== 0) {
+    //   return message.error("Bid increment is required");
+    // }
     if (!data.startTime || !data.endTime) {
       return message.error("Start time and End time are required");
     }
@@ -485,34 +522,6 @@ const AddForm = forwardRef(({ list }, ref) => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Reserve Price (₹)" required>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  min={0}
-                  value={data.reservePrice}
-                  onChange={(v) => handleChange({ reservePrice: v })}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Bid Increment (₹)" required>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  min={0}
-                  value={data.bidIncrement}
-                  onChange={(v) => handleChange({ bidIncrement: v })}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
               <Form.Item label="Start Time" required>
                 <DatePicker
                   showTime
@@ -542,6 +551,7 @@ const AddForm = forwardRef(({ list }, ref) => {
 });
 
 /* ==================== View Bids Modal ==================== */
+
 const ViewBidsModal = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
   const [auctionInfo, setAuctionInfo] = useState(null);
@@ -549,24 +559,57 @@ const ViewBidsModal = forwardRef((_, ref) => {
   const [loading, setLoading] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [auctionId, setAuctionId] = useState(null);
+
+  // Same pagination shape as the main Auction table
+  const [qData, setQData] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
 
   useImperativeHandle(ref, () => ({
-    openModal(auctionId) {
-      fetchBids(auctionId);
+    openModal(id) {
+      setAuctionId(id);
+      setQData({ page: 1, limit: 10, total: 0, totalPages: 1 });
+      fetchBids(id, { page: 1, limit: 10 });
     },
   }));
 
-  const fetchBids = async (auctionId) => {
+  const fetchBids = async (id, params = {}) => {
+    if (!id) return;
+
     setLoading(true);
     try {
-      const res = await serviceAuction.getBids(auctionId);
+      const res = await serviceAuction.getBids(id, {
+        page: params.page || qData.page,
+        limit: params.limit || qData.limit,
+      });
+
       const payload = res?.data?.data || res?.data || {};
+      const pagination = res?.pagination || res?.data?.pagination || {};
+
       setAuctionInfo({
         auctionId: payload.auctionId,
         reservePrice: payload.reservePrice,
-        totalBids: payload.totalBids,
+        totalBids: payload.totalBids ?? pagination.total ?? 0,
       });
-      setBids(payload.bids || []);
+
+      setBids(
+        (payload.bids || []).map((b) => ({
+          ...b,
+          key: b.bidId,
+        }))
+      );
+
+      setQData((prev) => ({
+        ...prev,
+        page: pagination.page ?? prev.page,
+        limit: pagination.limit ?? prev.limit,
+        total: pagination.total ?? 0,
+        totalPages: pagination.totalPages ?? 1,
+      }));
     } catch (err) {
       message.error(err?.message || "Failed to load bids");
     } finally {
@@ -575,111 +618,118 @@ const ViewBidsModal = forwardRef((_, ref) => {
     }
   };
 
+  // Re-fetch when page / limit changes
+  useEffect(() => {
+    if (open && auctionId) {
+      fetchBids(auctionId, { page: qData.page, limit: qData.limit });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qData.page, qData.limit]);
+
   const openBidDetail = (bid) => {
     setSelectedBid(bid);
     setDetailOpen(true);
   };
+
+  const bidColumns = [
+    {
+      title: "Rank",
+      dataIndex: "rank",
+      width: 70,
+      render: (v) => <Tag color="blue">#{v}</Tag>,
+    },
+    {
+      title: "Bidder",
+      dataIndex: "bidder",
+      render: (bidder) =>
+        bidder ? (
+          <Space direction="vertical" size={0}>
+            <span>{bidder.name || "-"}</span>
+            <small style={{ color: "#888" }}>{bidder.email || ""}</small>
+          </Space>
+        ) : (
+          "-"
+        ),
+    },
+    {
+      title: "Bid Amount",
+      dataIndex: "amount",
+      render: (v) => (v != null ? `₹${Number(v).toLocaleString()}` : "-"),
+    },
+    {
+      title: "Mobile No.",
+      dataIndex: "phone",
+      render: (v, row) => row.bidder?.phone || "-",
+    },
+    {
+      title: "Bid Time",
+      dataIndex: "placedAt",
+      render: (date) =>
+        date ? dayjs(date).format("DD MMM YYYY • hh:mm A") : "-",
+    },
+    {
+      title: "Action",
+      width: 100,
+      fixed: "right",
+      render: (_, row) => (
+        <Button
+          size="small"
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => openBidDetail(row)}
+        >
+          Detail
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <>
       <Modal
         title="Auction Bids"
         open={open}
-        onCancel={() => setOpen(false)}
+        onCancel={() => {
+          setOpen(false);
+          setAuctionId(null);
+          setBids([]);
+          setAuctionInfo(null);
+        }}
         footer={null}
         width={1100}
         destroyOnClose
       >
-        <Spin spinning={loading}>
-          {auctionInfo && (
-            <Card size="small" style={{ marginBottom: 16 }}>
-              <Row gutter={[16, 8]}>
-                <Col span={8}>
-                  <strong>Auction ID:</strong>{" "}
-                  <Tag color="blue">{auctionInfo.auctionId}</Tag>
-                </Col>
-                <Col span={8}>
-                  <strong>Reserve Price:</strong> ₹
-                  {Number(auctionInfo.reservePrice || 0).toLocaleString()}
-                </Col>
-                <Col span={8}>
-                  <strong>Total Bids:</strong> {auctionInfo.totalBids}
-                </Col>
-              </Row>
-            </Card>
-          )}
+        {auctionInfo && (
+          <Card size="small" style={{ marginBottom: 16 }}>
+            <Row gutter={[16, 8]}>
+              <Col span={8}>
+                <strong>Auction ID:</strong>{" "}
+                <Tag color="blue">{auctionInfo.auctionId}</Tag>
+              </Col>
+              <Col span={8}>
+                <strong>Total Bids:</strong> {auctionInfo.totalBids}
+              </Col>
+            </Row>
+          </Card>
+        )}
 
-          <Table
-            dataSource={bids}
-            rowKey={(record) => record.bidId}
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: "max-content" }}
-            locale={{ emptyText: "No bids placed yet" }}
-            columns={[
-              {
-                title: "Rank",
-                dataIndex: "rank",
-                width: 70,
-                render: (v) => <Tag color="blue">#{v}</Tag>,
-              },
-              {
-                title: "Alias",
-                dataIndex: "alias",
-                render: (v) => v || "-",
-              },
-              {
-                title: "Bidder",
-                dataIndex: "bidder",
-                render: (bidder) =>
-                  bidder ? (
-                    <Space direction="vertical" size={0}>
-                      <span>{bidder.name || "-"}</span>
-                      <small style={{ color: "#888" }}>{bidder.email || ""}</small>
-                    </Space>
-                  ) : (
-                    "-"
-                  ),
-              },
-              {
-                title: "Bid Amount",
-                dataIndex: "amount",
-                render: (v) =>
-                  v != null ? `₹${Number(v).toLocaleString()}` : "-",
-              },
-              {
-                title: "Meets Reserve",
-                dataIndex: "meetsReserve",
-                width: 120,
-                render: (v) =>
-                  v ? (
-                    <Tag color="green">Yes</Tag>
-                  ) : (
-                    <Tag color="red">No</Tag>
-                  ),
-              },
-              {
-                title: "Bid Time",
-                dataIndex: "placedAt",
-                render: (date) =>
-                  date ? dayjs(date).format("DD MMM YYYY • hh:mm A") : "-",
-              },
-              {
-                title: "Action",
-                width: 100,
-                render: (_, row) => (
-                  <Button
-                    size="small"
-                    type="link"
-                    icon={<EyeOutlined />}
-                    onClick={() => openBidDetail(row)}
-                  >
-                    Detail
-                  </Button>
-                ),
-              },
-            ]}
-          />
-        </Spin>
+        {/* Same table format + pagination as main Auction table */}
+        <Table
+          bordered
+          loading={loading}
+          columns={bidColumns}
+          dataSource={bids}
+          pagination={false}
+          scroll={{ x: "max-content", y: 400 }}
+          locale={{ emptyText: "No bids placed yet" }}
+          size="small"
+          footer={() => (
+            <Pagination
+              qData={qData}
+              setQData={setQData}
+            />
+          )}
+        />
       </Modal>
 
       {/* Bid Detail Modal */}
@@ -712,10 +762,12 @@ const ViewBidsModal = forwardRef((_, ref) => {
               </Col>
               <Col span={12}>
                 <strong>Meets Reserve:</strong>{" "}
-                {selectedBid.meetsReserve ? (
+                {selectedBid.meetsReserve === true ? (
                   <Tag color="green">Yes</Tag>
-                ) : (
+                ) : selectedBid.meetsReserve === false ? (
                   <Tag color="red">No</Tag>
+                ) : (
+                  "-"
                 )}
               </Col>
               <Col span={12}>
