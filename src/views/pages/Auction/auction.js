@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import {
   Table,
   Button,
@@ -33,7 +32,7 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
-import serviceAuction from "../../../services/auction"; // adjust path if needed
+import serviceAuction from "../../../services/auction";
 import Pagination from "../../components/Pagination";
 import { useNavigate } from "react-router-dom";
 import { AntdMsg } from "../../../utils/Antd";
@@ -72,11 +71,41 @@ export default function Auction() {
   const [loading, setLoading] = useState(false);
   const [qData, setQData] = useState({ page: 1, limit: 10, search: "", status: undefined });
   const [cancelModal, setCancelModal] = useState({ open: false, id: null, reason: "" });
+  const [rejectModal, setRejectModal] = useState({ open: false, id: null, reason: "" });
 
   const addNewModalRef = useRef();
   const viewBidsModalRef = useRef();
 
+  // ── Approve / Reject handlers ──────────────────────────────
+  const approveAuction = (id) => {
+    serviceAuction
+      .approve(id)
+      .then(() => {
+        message.success("Auction approved successfully");
+        list();
+      })
+      .catch((err) => message.error(err?.message || "Approve failed"));
+  };
 
+  const openRejectModal = (id) => {
+    setRejectModal({ open: true, id, reason: "" });
+  };
+
+  const handleRejectAuction = () => {
+    if (!rejectModal.reason.trim()) {
+      return message.error("Please enter a rejection reason");
+    }
+
+    serviceAuction
+      .reject(rejectModal.id, { reason: rejectModal.reason.trim() })
+      .then(() => {
+        message.success("Auction rejected successfully");
+        setRejectModal({ open: false, id: null, reason: "" });
+        list();
+      })
+      .catch((err) => message.error(err?.message || "Reject failed"));
+  };
+  // ───────────────────────────────────────────────────────────
 
   const columns = [
     { title: "S.No", width: 60, render: (_, __, index) => index + 1 },
@@ -128,13 +157,15 @@ export default function Auction() {
           UPCOMING: "blue",
           ENDED: "orange",
           CANCELLED: "red",
+          PENDING_APPROVAL: "gold",
+          REJECTED: "red",
         };
         return <Tag color={colorMap[status] || "default"}>{status || "-"}</Tag>;
       },
     },
     {
       title: "Action",
-      width: 280,
+      width: 320,
       fixed: "right",
       render: (_, row) => (
         <Space wrap>
@@ -184,14 +215,36 @@ export default function Auction() {
             </Button>
           )}
 
-          {/* <Popconfirm
-            title="Delete this auction?"
-            onConfirm={() => deleteData(row._id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="primary" size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm> */}
+          {/* Approve / Reject for PENDING_APPROVAL */}
+          {row.effectiveStatus === "PENDING_APPROVAL" && (
+            <>
+              <Popconfirm
+                title="Approve this auction?"
+                onConfirm={() => approveAuction(row._id)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<CheckCircleOutlined />}
+                  style={{ background: "#52c41a", borderColor: "#52c41a" }}
+                >
+                  Approve
+                </Button>
+              </Popconfirm>
+
+              <Button
+                type="primary"
+                size="small"
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={() => openRejectModal(row._id)}
+              >
+                Reject
+              </Button>
+            </>
+          )}
         </Space>
       ),
     },
@@ -324,6 +377,30 @@ export default function Auction() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Reject Auction Modal */}
+      <Modal
+        title="Reject Auction"
+        open={rejectModal.open}
+        onCancel={() => setRejectModal({ open: false, id: null, reason: "" })}
+        onOk={handleRejectAuction}
+        okText="Reject Auction"
+        okButtonProps={{ danger: true }}
+        destroyOnClose
+      >
+        <Form layout="vertical">
+          <Form.Item label="Reason" required>
+            <Input.TextArea
+              rows={3}
+              placeholder="Enter reason for rejection"
+              value={rejectModal.reason}
+              onChange={(e) =>
+                setRejectModal((prev) => ({ ...prev, reason: e.target.value }))
+              }
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 }
@@ -429,12 +506,6 @@ const AddForm = forwardRef(({ list }, ref) => {
     if (!data.startingPrice && data.startingPrice !== 0) {
       return message.error("Starting price is required");
     }
-    // if (!data.reservePrice && data.reservePrice !== 0) {
-    //   return message.error("Reserve price is required");
-    // }
-    // if (!data.bidIncrement && data.bidIncrement !== 0) {
-    //   return message.error("Bid increment is required");
-    // }
     if (!data.startTime || !data.endTime) {
       return message.error("Start time and End time are required");
     }
@@ -551,7 +622,6 @@ const AddForm = forwardRef(({ list }, ref) => {
 });
 
 /* ==================== View Bids Modal ==================== */
-
 const ViewBidsModal = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
   const [auctionInfo, setAuctionInfo] = useState(null);
@@ -561,7 +631,6 @@ const ViewBidsModal = forwardRef((_, ref) => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [auctionId, setAuctionId] = useState(null);
 
-  // Same pagination shape as the main Auction table
   const [qData, setQData] = useState({
     page: 1,
     limit: 10,
@@ -618,12 +687,10 @@ const ViewBidsModal = forwardRef((_, ref) => {
     }
   };
 
-  // Re-fetch when page / limit changes
   useEffect(() => {
     if (open && auctionId) {
       fetchBids(auctionId, { page: qData.page, limit: qData.limit });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qData.page, qData.limit]);
 
   const openBidDetail = (bid) => {
@@ -713,7 +780,6 @@ const ViewBidsModal = forwardRef((_, ref) => {
           </Card>
         )}
 
-        {/* Same table format + pagination as main Auction table */}
         <Table
           bordered
           loading={loading}
@@ -724,10 +790,7 @@ const ViewBidsModal = forwardRef((_, ref) => {
           locale={{ emptyText: "No bids placed yet" }}
           size="small"
           footer={() => (
-            <Pagination
-              qData={qData}
-              setQData={setQData}
-            />
+            <Pagination qData={qData} setQData={setQData} />
           )}
         />
       </Modal>

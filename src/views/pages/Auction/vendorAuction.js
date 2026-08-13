@@ -197,25 +197,40 @@ export default function VendorAuction() {
     },
   ];
 
-  function list() {
-    setLoading(true);
-    serviceAuction
-      .listAuction(qData)
-      .then((res) => {
-        const auctions = res?.data || [];
-        setData(auctions.map((v) => ({ ...v, key: v._id })));
+function list() {
+  setLoading(true);
 
-        setQData((prev) => ({
-          ...prev,
-          limit: res?.pagination?.limit ?? 10,
-          page: res?.pagination?.page ?? 1,
-          total: res?.pagination?.total ?? 0,
-          totalPages: res?.pagination?.totalPages ?? 1,
-        }));
-      })
-      .catch((e) => message.error(e?.message || "Failed to load auctions"))
-      .finally(() => setLoading(false));
-  }
+  serviceAuction
+    .listAuction(qData)
+    .then((res) => {
+      const auctions = Array.isArray(res?.data?.auctions)
+        ? res.data.auctions
+        : [];
+
+      setData(
+        auctions.map((v) => ({
+          ...v,
+          key: v._id,
+        }))
+      );
+
+      const pagination = res?.data?.pagination || {};
+
+      setQData((prev) => ({
+        ...prev,
+        limit: pagination.limit ?? 10,
+        page: pagination.page ?? 1,
+        total: pagination.total ?? 0,
+        totalPages: pagination.totalPages ?? 1,
+      }));
+    })
+    .catch((e) => {
+      message.error(e?.message || "Failed to load auctions");
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+}
 
   const deleteData = (id) => {
     serviceAuction

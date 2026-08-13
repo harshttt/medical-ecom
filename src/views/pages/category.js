@@ -46,24 +46,6 @@ export default function Category({ parentId }) {
 
   const columns = [
     {
-      title: "#",
-      width: 40,
-      render: (v, row, i) => <b>{i + 1}</b>,
-    },
-    // {
-    //   title: "Image",
-    //   dataIndex: "image_url",
-    //   width: 100,
-    //   render: (v) =>
-    //     v ? <Image src={v} height={60} style={{ objectFit: "cover" }} /> : "-",
-    // },
-    {
-      title: "Date",
-      dataIndex: "createdAt",
-      width: 150,
-      render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
-    },
-    {
       title: "Name",
       dataIndex: "name",
       width: 200,
@@ -73,7 +55,12 @@ export default function Category({ parentId }) {
       dataIndex: "sortOrder",
       width: 80,
     },
-    
+     {
+      title: "Date",
+      dataIndex: "createdAt",
+      width: 150,
+      render: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"),
+    },
     {
       title: "Active",
       dataIndex: "isActive",
