@@ -203,7 +203,7 @@ export default function UserVendor() {
   }, [qData?.page, qData?.limit]);
 
   useEffect(() => {
-    servicesCategory.listCategory().then((res) => {
+    servicesCategory.listCategory({ limit: 2000 }).then((res) => {
       setCategory(res?.data?.categories);
     });
   }, []);

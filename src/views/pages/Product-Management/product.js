@@ -18,6 +18,7 @@ import {
   Select,
   Switch,
   Cascader,
+  Tabs,
 } from "antd";
 import {
   DeleteOutlined,
@@ -67,7 +68,8 @@ export default function Product() {
       title: "S.No",
       dataIndex: "sno",
       width: 50,
-      render: (text, record, index) => index + 1,
+       render: (text, record, index) =>
+        index + 1 + (qData?.page - 1) * qData?.limit,
     },
     {
       title: "Name",
@@ -204,7 +206,7 @@ export default function Product() {
       })
       .catch((err) => {
         message.error(
-          
+
           err?.message ||
           "Failed to update product status"
         );
@@ -238,9 +240,9 @@ export default function Product() {
   };
 
 
-useEffect(() => {
-  list();
-}, [qData.page, qData.limit, qData.status, qData.search]);
+  useEffect(() => {
+    list();
+  }, [qData.page, qData.limit]);
 
   useEffect(() => {
     servicesCategory.listCategory({ limit: 2000 }).then((res) => {
@@ -311,64 +313,34 @@ useEffect(() => {
 }
 
 function Search({ qData, setQData, list }) {
-  const handleSearch = () => {
-    setQData((prev) => ({
-      ...prev,
-      page: 1,
-    }));
-  };
-
-  const handleStatusChange = (value) => {
-    setQData((prev) => ({
-      ...prev,
-      status: value,
-      page: 1,
-      status: undefined
-    }));
-  };
-
   return (
     <Form
-      onSubmitCapture={(e) => {
-        e.preventDefault();
-        handleSearch();
+      onSubmitCapture={() => {
+        qData.page = 1; // Reset page on search
+        list();
       }}
     >
-      <Row gutter={[12, 12]} align="middle">
-        <Col span={8}>
+      <Row gutter={12}>
+        <Col span={6}>
           <Input
-            placeholder="Search product"
-            value={qData.search}
-            onChange={(e) =>
-              setQData((prev) => ({
-                ...prev,
-                search: e.target.value,
-              }))
-            }
+            placeholder="Search  "
+            value={qData?.search}
+            onChange={(e) => setQData({ ...qData, search: e.target.value })}
             allowClear
           />
         </Col>
-
-        <Col span={3}>
+        <Col span={6}>
           <Select
-            style={{ width: "100%" }}
-            placeholder="Filter by Status"
+             style={{ width: "100%" }}
+            placeholder="Status"
             value={qData?.status}
-            onChange={handleStatusChange}
+            onChange={(value) => setQData({ ...qData, status: value })}
             allowClear
-            options={[
-              {
-                label: "Active",
-                value: 2,
-              },
-              {
-                label: "Inactive",
-                value: 5,
-              },
-            ]}
-          />
+          >
+            <Select.Option value={2}>Active</Select.Option>
+            <Select.Option value={5}>Inactive</Select.Option>
+          </Select>
         </Col>
-
         <Col span={3}>
           <Button type="primary" htmlType="submit">
             Search
@@ -471,194 +443,277 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
     >
       <Spin spinning={ajxRequesting}>
         <Form layout="vertical">
-          <Row gutter={20} style={{ marginTop: 20 }}>
-            <Col span={12}>
-              <Form.Item label="Name" required>
-                <Input
-                  value={data?.name}
-                  onChange={(e) => handleChange({ name: e.target.value })}
-                  placeholder="Wireless Mouse"
-                />
-              </Form.Item>
-            </Col>
+          <Tabs defaultActiveKey="0" type="card">
+            <Tabs.TabPane tab="Basic Information" key="0">
+              <Row gutter={20} style={{ marginTop: 20 }}>
+                <Col span={12}>
+                  <Form.Item label="Name" required>
+                    <Input
+                      value={data?.name}
+                      onChange={(e) => handleChange({ name: e.target.value })}
+                      placeholder="Wireless Mouse"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item label="Choose Category" required>
-                <Select
-                  style={{ width: "100%" }}
-                  value={data?.categoryId}
-                  onChange={(value) => handleChange({ categoryId: value })}
-                  placeholder="Choose category"
-                  options={(category || [])?.map((cat) => ({
-                    label: cat?.name,
-                    value: cat?._id,
-                  }))}
-                  notFoundContent="No categories available"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label="Choose Category" required>
+                    <Select
+                      style={{ width: "100%" }}
+                      value={data?.categoryId}
+                      onChange={(value) => handleChange({ categoryId: value })}
+                      placeholder="Choose category"
+                      options={(category || [])?.map((cat) => ({
+                        label: cat?.name,
+                        value: cat?._id,
+                      }))}
+                      notFoundContent="No categories available"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item label="Choose Brand" required>
-                <Select
-                  style={{ width: "100%" }}
-                  value={data?.brandId}
-                  onChange={(value) => handleChange({ brandId: value })}
-                  placeholder="Choose brand"
-                  options={(brand || [])?.map((cat) => ({
-                    label: cat?.name,
-                    value: cat?._id,
-                  }))}
-                  notFoundContent="No brands available"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label="Choose Brand" required>
+                    <Select
+                      style={{ width: "100%" }}
+                      value={data?.brandId}
+                      onChange={(value) => handleChange({ brandId: value })}
+                      placeholder="Choose brand"
+                      options={(brand || [])?.map((cat) => ({
+                        label: cat?.name,
+                        value: cat?._id,
+                      }))}
+                      notFoundContent="No brands available"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={24}>
-              <Form.Item label="Description" required>
-                <Input.TextArea
-                  value={data?.description}
-                  onChange={(e) =>
-                    handleChange({ description: e.target.value })
-                  }
-                  placeholder="A high-precision wireless mouse with ergonomic design."
-                  rows={4}
-                />
-              </Form.Item>
-            </Col>
+                <Col span={24}>
+                  <Form.Item label="Description" required>
+                    <Input.TextArea
+                      value={data?.description}
+                      onChange={(e) =>
+                        handleChange({ description: e.target.value })
+                      }
+                      placeholder="A high-precision wireless mouse with ergonomic design."
+                      rows={4}
+                    />
+                  </Form.Item>
+                </Col>
 
 
 
-            {/* {useVariants == false ? (
+                {/* {useVariants == false ? (
               <> */}
-            <Col span={12}>
-              <Form.Item label="SKU" required>
-                <Input
-                  value={data?.sku}
-                  onChange={(e) => handleChange({ sku: e.target.value })}
-                  placeholder="WMOUSE123"
-                  disabled={!!data?._id}
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label="SKU" required>
+                    <Input
+                      value={data?.sku}
+                      onChange={(e) => handleChange({ sku: e.target.value })}
+                      placeholder="WMOUSE123"
+                      disabled={!!data?._id}
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item label=" Price" required>
-                <Input
-                  type="number"
-                  value={data?.price}
-                  onChange={(e) =>
-                    handleChange({
-                      price: Number(util.handleInteger(e.target.value)),
-                    })
-                  }
-                  placeholder="800"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label=" Price" required>
+                    <Input
+                      type="number"
+                      value={data?.price}
+                      onChange={(e) =>
+                        handleChange({
+                          price: Number(util.handleInteger(e.target.value)),
+                        })
+                      }
+                      placeholder="800"
+                    />
+                  </Form.Item>
+                </Col>
 
 
 
-            <Col span={12}>
-              <Form.Item label="Discount" required>
-                <Input
-                  type="number"
-                  value={data?.discount}
-                  onChange={(e) =>
-                    handleChange({
-                      discount: Number(util.handleInteger(e.target.value)),
-                    })
-                  }
-                  placeholder="50"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label="Discount" required>
+                    <Input
+                      type="number"
+                      value={data?.discount}
+                      onChange={(e) =>
+                        handleChange({
+                          discount: Number(util.handleInteger(e.target.value)),
+                        })
+                      }
+                      placeholder="50"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item label="GST Percentage" required>
-                <Input
-                  type="number"
-                  value={data?.gst}
-                  onChange={(e) =>
-                    handleChange({
-                      gst: Number(util.handleInteger(e.target.value)),
-                    })
-                  }
-                  placeholder="18%"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label="GST Percentage" required>
+                    <Input
+                      type="number"
+                      value={data?.gst}
+                      onChange={(e) =>
+                        handleChange({
+                          gst: Number(util.handleInteger(e.target.value)),
+                        })
+                      }
+                      placeholder="18%"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item label=" Stock">
-                <Input
-                  type="number"
-                  value={data?.stock}
-                  onChange={(e) =>
-                    handleChange({
-                      stock: Number(util.handleInteger(e.target.value)),
-                    })
-                  }
-                  placeholder="100"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item label=" Stock">
+                    <Input
+                      type="number"
+                      value={data?.stock}
+                      onChange={(e) =>
+                        handleChange({
+                          stock: Number(util.handleInteger(e.target.value)),
+                        })
+                      }
+                      placeholder="100"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={12}>
-              <Form.Item
-                label="Upload Thumbnail Image url"
-                required
-                extra={
-                  <span style={{ fontSize: "12px", color: "#888" }}>
-                    Recommended:size (max 1 MB) for good design
-                    standards.
-                  </span>
-                }
-              >
-                <UploadImage
-                  value={
-                    data?.thumbnail ? [{ url: data?.thumbnail }] : []
-                  } // wrap single value in array
-                  count={1} // single file only
-                  // requiredWidth={400}
-                  // requiredHeight={242}
-                  onChange={(v) =>
+                <Col span={12}>
+                  <Form.Item
+                    label="Upload Thumbnail Image url"
+                    required
+                    extra={
+                      <span style={{ fontSize: "12px", color: "#888" }}>
+                        Recommended:size (max 1 MB) for good design
+                        standards.
+                      </span>
+                    }
+                  >
+                    <UploadImage
+                      value={
+                        data?.thumbnail ? [{ url: data?.thumbnail }] : []
+                      } // wrap single value in array
+                      count={1} // single file only
+                      // requiredWidth={400}
+                      // requiredHeight={242}
+                      onChange={(v) =>
 
-                    handleChange({
-                      thumbnail: v?.[0]?.url || "", // store only first file's URL
-                    })
-                  }
-                  listType="picture-card"
-                />
-              </Form.Item>
-            </Col>
+                        handleChange({
+                          thumbnail: v?.[0]?.url || "", // store only first file's URL
+                        })
+                      }
+                      listType="picture-card"
+                    />
+                  </Form.Item>
+                </Col>
 
-            <Col span={24}>
-              <Form.Item
-                label="Upload Image "
-                required
-              // extra={
-              //   <span style={{ fontSize: "12px", color: "#888" }}>
-              //     Recommended:size 400×242px (max 5 MB) for good design
-              //     standards.
-              //   </span>
-              // }
-              >
+                <Col span={24}>
+                  <Form.Item
+                    label="Upload Image "
+                    required
+                  // extra={
+                  //   <span style={{ fontSize: "12px", color: "#888" }}>
+                  //     Recommended:size 400×242px (max 5 MB) for good design
+                  //     standards.
+                  //   </span>
+                  // }
+                  >
 
-                <UploadImage
-                  value={(data?.images || [])?.map((url) => ({ url }))}
-                  count={10}
-                  onChange={(files) =>
-                    handleChange({
-                      images: files?.map((file) => file.url),
-                    })
-                  }
-                  listType="picture-card"
-                />
+                    <UploadImage
+                      value={(data?.images || [])?.map((url) => ({ url }))}
+                      count={10}
+                      onChange={(files) =>
+                        handleChange({
+                          images: files?.map((file) => file.url),
+                        })
+                      }
+                      listType="picture-card"
+                    />
 
-              </Form.Item>
-            </Col>
-          </Row>
+                  </Form.Item>
+                </Col>
+
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Highlights" key="2">
+              <Row gutter={20} style={{ marginTop: 20 }}>
+                <Col span={24}>
+                  <Form.Item label="Highlights">
+                    {!data?.highlights || data?.highlights.length === 0 ? (
+                      <Button
+                        type="dashed"
+                        block
+                        icon={<PlusOutlined />}
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            highlights: [
+                              {
+                                icon: "",
+                                heading: "",
+                                description: "",
+                              },
+                            ],
+                          })
+                        }
+                      >
+                        Add Highlights
+                      </Button>
+                    ) : (
+                      <VariantService
+
+                        variantDetails={data?.highlights}
+                        parentKay="highlights"
+                        handleChange={(val) =>
+                          setData({ ...data, highlights: val })
+                        }
+                      />
+                    )}
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Key Feature" key="1">
+              <Row gutter={20} style={{ marginTop: 20 }}>
+                <Col span={24}>
+                  <Form.Item label="Key Features">
+                    {!data?.keyFeatures || data?.keyFeatures.length === 0 ? (
+                      <Button
+                        type="dashed"
+                        block
+                        icon={<PlusOutlined />}
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            keyFeatures: [
+                              {
+                                icon: "",
+                                heading: "",
+                                description: "",
+                              },
+                            ],
+                          })
+                        }
+                      >
+                        Add Key Feature
+                      </Button>
+                    ) : (
+                      <VariantService
+
+                        variantDetails={data?.keyFeatures}
+                        parentKay="keyFeatures"
+                        handleChange={(val) =>
+                          setData({ ...data, keyFeatures: val })
+                        }
+                      />
+                    )}
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Tabs.TabPane>
+
+
+          </Tabs>
         </Form>
       </Spin>
     </Modal>
@@ -666,3 +721,135 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 });
 
 
+
+function VariantService({
+  variantDetails: data,
+  parentKay,
+  handleChange,
+
+}) {
+
+
+
+  const handleFieldChange = (value, fieldName, index) => {
+    const newData = data.map((item, i) => {
+      if (i === index) {
+        return { ...item, [fieldName]: value };
+      }
+      return item;
+    });
+    handleChange(newData, parentKay);
+  };
+
+  const handleAddRow = () => {
+    if (data.length < 3) {
+      handleChange(
+        [...data, { icon: "", heading: "", description: "" }],
+        parentKay
+      );
+    }
+  };
+
+  const handleRemoveRow = (index) => {
+    handleChange(
+      data.filter((_, idx) => idx !== index),
+      parentKay
+    );
+  };
+
+  // track selected service types
+  const selectedServiceTypes = data
+    .map((item) => item.service_type)
+    .filter((v) => v !== undefined && v !== null);
+
+  return (
+    <Table
+      bordered
+      size="small"
+      pagination={false}
+      columns={[
+
+        {
+          width: 100,
+          title: "Icon",
+          dataIndex: "icon",
+          render: (value, record, index) => (
+            <UploadImage
+              value={value ? [{ url: value }] : []}
+              count={1}
+              onChange={(v) =>
+                handleFieldChange(
+                  v?.[0]?.url || "",
+                  "icon",
+                  index
+                )
+              }
+              listType="picture-card"
+            />
+          ),
+        },
+
+        {
+          width: 100,
+          title: "Heading",
+          dataIndex: "heading",
+          render: (value, record, index) => (
+            <Input
+              value={value}
+              placeholder="Heading"
+              onChange={(e) =>
+                handleFieldChange(
+                  e.target.value,
+                  "heading",
+                  index
+                )
+              }
+            />
+          ),
+        },
+        {
+          width: 200,
+          title: "Description",
+          dataIndex: "description",
+          render: (value, record, index) => (
+            <Input.TextArea
+              value={value}
+              placeholder="Description"
+              onChange={(e) =>
+                handleFieldChange(
+                  e.target.value,
+                  "description",
+                  index
+                )
+              }
+            />
+          ),
+        },
+        {
+          width: 100,
+          render: (_, __, index) => (
+            <div style={{ display: "flex", gap: 8 }}>
+              {index + 1 === data.length && data.length < 6 && (
+                <Button
+                  icon={<PlusOutlined />}
+                  shape="circle"
+                  type="dashed"
+                  onClick={handleAddRow}
+                />
+              )}
+              <Button
+                icon={<CloseOutlined />}
+                shape="circle"
+                type="dashed"
+                danger
+                onClick={() => handleRemoveRow(index)}
+              />
+            </div>
+          ),
+        },
+      ]}
+      dataSource={data}
+      rowKey={(record, idx) => idx}
+    />
+  );
+}
