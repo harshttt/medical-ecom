@@ -120,7 +120,11 @@ export default function VendorProductBooking() {
         return <span>{row?.items?.[0]?.name || "-"}</span>;
       },
     },
-
+{
+      title: "OrderNumber",
+      width: 150,
+      dataIndex: "orderNumber"
+    },
     {
       title: " User Name",
       render: (v, row) => {
