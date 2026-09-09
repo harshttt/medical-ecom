@@ -673,7 +673,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                 </Col>
               </Row>
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Specifications" key="2">
+            <Tabs.TabPane tab="Card Data" key="2">
               <Row gutter={20} style={{ marginTop: 20 }}>
                 <Col span={24}>
                   <Form.Item label="Key Features">
@@ -695,7 +695,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                           })
                         }
                       >
-                        Add Specifications
+                        Add Card Data
                       </Button>
                     ) : (
                       <VariantService
@@ -711,10 +711,10 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                 </Col>
               </Row>
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Card Data" key="3">
+            <Tabs.TabPane tab="Specifications" key="3">
               <Row gutter={20} style={{ marginTop: 20 }}>
                 <Col span={24}>
-                  <Form.Item label="Card Data">
+                  <Form.Item label="Specifications">
                     {!data?.supportInfo || data?.supportInfo.length === 0 ? (
                       <Button
                         type="dashed"
@@ -733,7 +733,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                           })
                         }
                       >
-                        Add Card Data
+                       Add Specifications
                       </Button>
                     ) : (
                       <VariantService
