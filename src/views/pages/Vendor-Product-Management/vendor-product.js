@@ -605,7 +605,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
 
               </Row>
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Highlights" key="2">
+            <Tabs.TabPane tab="Highlights" key="1">
               <Row gutter={20} style={{ marginTop: 20 }}>
                 <Col span={24}>
                   <Form.Item label="Highlights">
@@ -619,9 +619,9 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                             ...data,
                             highlights: [
                               {
-                                icon: "",
-                                heading: "",
-                                description: "",
+
+                                title: "",
+
                               },
                             ],
                           })
@@ -630,7 +630,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                         Add Highlights
                       </Button>
                     ) : (
-                      <VariantService
+                      <VariantServiceTwo
 
                         variantDetails={data?.highlights}
                         parentKay="highlights"
@@ -643,7 +643,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                 </Col>
               </Row>
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Key Feature" key="1">
+            <Tabs.TabPane tab="Card Data" key="2">
               <Row gutter={20} style={{ marginTop: 20 }}>
                 <Col span={24}>
                   <Form.Item label="Key Features">
@@ -665,7 +665,7 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                           })
                         }
                       >
-                        Add Key Feature
+                        Add Card Data
                       </Button>
                     ) : (
                       <VariantService
@@ -681,7 +681,44 @@ const AddForm = forwardRef(({ list, category, productConstants, brand }, ref) =>
                 </Col>
               </Row>
             </Tabs.TabPane>
+            <Tabs.TabPane tab="Specifications" key="3">
+              <Row gutter={20} style={{ marginTop: 20 }}>
+                <Col span={24}>
+                  <Form.Item label="Specifications">
+                    {!data?.supportInfo || data?.supportInfo.length === 0 ? (
+                      <Button
+                        type="dashed"
+                        block
+                        icon={<PlusOutlined />}
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            supportInfo: [
+                              {
+                                icon: "",
+                                heading: "",
+                                description: "",
+                              },
+                            ],
+                          })
+                        }
+                      >
+                       Add Specifications
+                      </Button>
+                    ) : (
+                      <VariantService
 
+                        variantDetails={data?.supportInfo}
+                        parentKay="supportInfo"
+                        handleChange={(val) =>
+                          setData({ ...data, supportInfo: val })
+                        }
+                      />
+                    )}
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Tabs.TabPane>
 
           </Tabs>
         </Form>
@@ -799,7 +836,7 @@ function VariantService({
           width: 100,
           render: (_, __, index) => (
             <div style={{ display: "flex", gap: 8 }}>
-              {index + 1 === data.length && data.length < 6 && (
+              {index + 1 === data.length && data.length < 3 && (
                 <Button
                   icon={<PlusOutlined />}
                   shape="circle"
@@ -823,5 +860,103 @@ function VariantService({
     />
   );
 }
+
+function VariantServiceTwo({
+  variantDetails: data,
+  parentKay,
+  handleChange,
+
+}) {
+
+
+
+  const handleFieldChange = (value, fieldName, index) => {
+    const newData = data.map((item, i) => {
+      if (i === index) {
+        return { ...item, [fieldName]: value };
+      }
+      return item;
+    });
+    handleChange(newData, parentKay);
+  };
+
+  const handleAddRow = () => {
+    if (data.length < 100) {
+      handleChange(
+        [...data, { title: "", }],
+        parentKay
+      );
+    }
+  };
+
+  const handleRemoveRow = (index) => {
+    handleChange(
+      data.filter((_, idx) => idx !== index),
+      parentKay
+    );
+  };
+
+  // track selected service types
+  const selectedServiceTypes = data
+    .map((item) => item.service_type)
+    .filter((v) => v !== undefined && v !== null);
+
+  return (
+    <Table
+      bordered
+      size="small"
+      pagination={false}
+      columns={[
+
+
+
+        {
+          width: 100,
+          title: "Title",
+          dataIndex: "title",
+          render: (value, record, index) => (
+            <Input
+              value={value}
+              placeholder="Title"
+              onChange={(e) =>
+                handleFieldChange(
+                  e.target.value,
+                  "title",
+                  index
+                )
+              }
+            />
+          ),
+        },
+
+        {
+          width: 100,
+          render: (_, __, index) => (
+            <div style={{ display: "flex", gap: 8 }}>
+              {index + 1 === data.length && data.length < 100 && (
+                <Button
+                  icon={<PlusOutlined />}
+                  shape="circle"
+                  type="dashed"
+                  onClick={handleAddRow}
+                />
+              )}
+              <Button
+                icon={<CloseOutlined />}
+                shape="circle"
+                type="dashed"
+                danger
+                onClick={() => handleRemoveRow(index)}
+              />
+            </div>
+          ),
+        },
+      ]}
+      dataSource={data}
+      rowKey={(record, idx) => idx}
+    />
+  );
+}
+
 
 
