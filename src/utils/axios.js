@@ -24,6 +24,7 @@ axiosInstance.interceptors.response.use(
         return {...response.data, headers: response.headers};
     },
     (error) => {
+        
         let response = {};
         if (typeof error.response?.data !== 'undefined') {
             response = error.response?.data;
@@ -31,7 +32,7 @@ axiosInstance.interceptors.response.use(
                 response.message = error.message
             }
             if (response.errors && Array.isArray(response.errors)) {
-                response.message = response.errors[0].msg;
+                response.message = response.errors[0].message;
             }
         } else {
             response.message = error.message
